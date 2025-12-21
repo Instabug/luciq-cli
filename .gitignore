@@ -1,0 +1,17 @@
+# Bundler
+/.bundle/
+/vendor/bundle/
+Gemfile.lock
+
+# Gem build
+*.gem
+/pkg/
+
+# IDE
+/.idea/
+/.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
