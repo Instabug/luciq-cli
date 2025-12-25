@@ -67,4 +67,63 @@ RSpec.describe Luciq::API::Client do
       end.to raise_error(RuntimeError, /400/)
     end
   end
+
+  describe '#upload_react_native_sourcemap' do
+    let(:file_path) { '/tmp/index.android.bundle.map' }
+
+    before do
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake sourcemap'))
+    end
+
+    it 'uploads sourcemap with required params only' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_react_native_sourcemap(
+        file_path: file_path,
+        app_token: app_token
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'uploads sourcemap with os parameter' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_react_native_sourcemap(
+        file_path: file_path,
+        app_token: app_token,
+        os: 'android'
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'uploads sourcemap with app_version' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_react_native_sourcemap(
+        file_path: file_path,
+        app_token: app_token,
+        os: 'android',
+        app_version: { code: '10', name: '2.0.0', codepush: 'v5' }
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'raises error on failure' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 400, body: { error: 'invalid sourcemap' }.to_json)
+
+      expect do
+        client.upload_react_native_sourcemap(
+          file_path: file_path,
+          app_token: app_token
+        )
+      end.to raise_error(RuntimeError, /400/)
+    end
+  end
 end

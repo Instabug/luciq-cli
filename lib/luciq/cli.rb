@@ -20,6 +20,23 @@ module Luciq
     def android_mapping(file)
       Commands::Upload.new(options).android_mapping(file)
     end
+
+    desc 'react-native-sourcemap FILE', 'Upload React Native sourcemap file'
+    long_desc <<~DESC
+      Upload React Native sourcemap files to Instabug for crash symbolication.
+      File format: .json sourcemap file (e.g., index.android.bundle.map)
+      Example:
+        luciq upload react-native-sourcemap index.android.bundle.map --app-token APP_TOKEN --os android --version-name 1.0.0 --version-code 1
+    DESC
+    option :app_token, type: :string, required: true, desc: 'Your application token'
+    option :os, type: :string, enum: %w[ios android], desc: 'Target OS (ios or android)'
+    option :version_name, type: :string, desc: 'App version name (e.g., 1.0.0)'
+    option :version_code, type: :string, desc: 'App version code (e.g., 1)'
+    option :codepush, type: :string, desc: 'CodePush version label (e.g., v42)'
+    option :app_variant, type: :string, desc: 'App variant (e.g., prod, staging)'
+    def react_native_sourcemap(file)
+      Commands::Upload.new(options).react_native_sourcemap(file)
+    end
   end
 
   class CLI < Thor

@@ -30,6 +30,27 @@ module Luciq
         exit 1
       end
 
+      def react_native_sourcemap(file_path)
+        validate_file!(file_path)
+
+        puts "Uploading React Native sourcemap: #{File.basename(file_path)}"
+        puts
+
+        app_version = build_app_version
+
+        @client.upload_react_native_sourcemap(
+          file_path: file_path,
+          app_token: @options[:app_token],
+          os: @options[:os],
+          app_version: app_version
+        )
+
+        puts '✓ React Native sourcemap uploaded successfully!'
+      rescue StandardError => e
+        puts "✗ Upload failed: #{e.message}"
+        exit 1
+      end
+
       private
 
       def validate_file!(file_path)
@@ -50,6 +71,18 @@ module Luciq
         puts "✗ File must be a .zip archive: #{file_path}"
         puts '  The ZIP should contain a single text file.'
         exit 1
+      end
+
+      def build_app_version
+        return nil unless @options[:version_code] || @options[:version_name]
+
+        version = {}
+        version[:code] = @options[:version_code] if @options[:version_code]
+        version[:name] = @options[:version_name] if @options[:version_name]
+        version[:codepush] = @options[:codepush] if @options[:codepush]
+        version[:app_variant] = @options[:app_variant] if @options[:app_variant]
+
+        version
       end
     end
   end
