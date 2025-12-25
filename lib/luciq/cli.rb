@@ -21,21 +21,32 @@ module Luciq
       Commands::Upload.new(options).android_mapping(file)
     end
 
-    desc 'react-native-sourcemap FILE', 'Upload React Native sourcemap file'
+    desc 'react-native-ios FILE', 'Upload React Native iOS dSYM file'
     long_desc <<~DESC
-      Upload React Native sourcemap files to Instabug for crash symbolication.
-      File format: .json sourcemap file (e.g., index.android.bundle.map)
+      Upload React Native iOS dSYM files to Instabug for crash symbolication.
+      File format: .zip containing dSYM files
       Example:
-        luciq upload react-native-sourcemap index.android.bundle.map --app-token APP_TOKEN --os android --version-name 1.0.0 --version-code 1
+        luciq upload react-native-ios dsyms.zip --app-token APP_TOKEN
     DESC
     option :app_token, type: :string, required: true, desc: 'Your application token'
-    option :os, type: :string, enum: %w[ios android], desc: 'Target OS (ios or android)'
-    option :version_name, type: :string, desc: 'App version name (e.g., 1.0.0)'
-    option :version_code, type: :string, desc: 'App version code (e.g., 1)'
+    def react_native_ios(file)
+      Commands::Upload.new(options).react_native_ios(file)
+    end
+
+    desc 'react-native-android FILE', 'Upload React Native Android sourcemap file'
+    long_desc <<~DESC
+      Upload React Native Android sourcemap files to Instabug for crash symbolication.
+      File format: .txt sourcemap file
+      Example:
+        luciq upload react-native-android android-sourcemap.txt --app-token APP_TOKEN --version-code 1 --version-name 1.0.0
+    DESC
+    option :app_token, type: :string, required: true, desc: 'Your application token'
+    option :version_code, type: :string, required: true, desc: 'App version code (e.g., 1)'
+    option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     option :codepush, type: :string, desc: 'CodePush version label (e.g., v42)'
     option :app_variant, type: :string, desc: 'App variant (e.g., prod, staging)'
-    def react_native_sourcemap(file)
-      Commands::Upload.new(options).react_native_sourcemap(file)
+    def react_native_android(file)
+      Commands::Upload.new(options).react_native_android(file)
     end
   end
 

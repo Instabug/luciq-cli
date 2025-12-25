@@ -30,22 +30,37 @@ module Luciq
         exit 1
       end
 
-      def react_native_sourcemap(file_path)
+      def react_native_ios(file_path)
         validate_file!(file_path)
+        validate_zip_extension!(file_path)
 
-        puts "Uploading React Native sourcemap: #{File.basename(file_path)}"
+        puts "Uploading React Native iOS dSYM: #{File.basename(file_path)}"
         puts
 
-        app_version = build_app_version
-
-        @client.upload_react_native_sourcemap(
+        @client.upload_react_native_ios(
           file_path: file_path,
-          app_token: @options[:app_token],
-          os: @options[:os],
-          app_version: app_version
+          app_token: @options[:app_token]
         )
 
-        puts '✓ React Native sourcemap uploaded successfully!'
+        puts '✓ React Native iOS dSYM uploaded successfully!'
+      rescue StandardError => e
+        puts "✗ Upload failed: #{e.message}"
+        exit 1
+      end
+
+      def react_native_android(file_path)
+        validate_file!(file_path)
+
+        puts "Uploading React Native Android sourcemap: #{File.basename(file_path)}"
+        puts
+
+        @client.upload_react_native_android(
+          file_path: file_path,
+          app_token: @options[:app_token],
+          app_version: build_app_version
+        )
+
+        puts '✓ React Native Android sourcemap uploaded successfully!'
       rescue StandardError => e
         puts "✗ Upload failed: #{e.message}"
         exit 1
@@ -74,15 +89,12 @@ module Luciq
       end
 
       def build_app_version
-        return nil unless @options[:version_code] || @options[:version_name]
-
-        version = {}
-        version[:code] = @options[:version_code] if @options[:version_code]
-        version[:name] = @options[:version_name] if @options[:version_name]
-        version[:codepush] = @options[:codepush] if @options[:codepush]
-        version[:app_variant] = @options[:app_variant] if @options[:app_variant]
-
-        version
+        version = {
+          code: @options[:version_code],
+          name: @options[:version_name],
+          codepush: @options[:codepush],
+          app_variant: @options[:app_variant]
+        }.compact
       end
     end
   end

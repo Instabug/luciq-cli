@@ -55,18 +55,10 @@ RSpec.describe Luciq::Commands::Upload do
         expect { upload.android_mapping(file_path) }.to output(include('Cannot read file')).to_stdout.and raise_error(SystemExit)
       end
     end
-
-    context 'when file is not a zip' do
-      let(:file_path) { '/tmp/mapping.txt' }
-
-      it 'exits with error' do
-        expect { upload.android_mapping(file_path) }.to output(include('must be a .zip archive')).to_stdout.and raise_error(SystemExit)
-      end
-    end
   end
 
-  describe '#react_native_sourcemap' do
-    let(:file_path) { '/tmp/index.android.bundle.map' }
+  describe '#react_native_ios' do
+    let(:file_path) { '/tmp/dsyms.zip' }
     let(:options) { { app_token: app_token } }
     let(:upload) { Luciq::Commands::Upload.new(options) }
 
@@ -75,43 +67,21 @@ RSpec.describe Luciq::Commands::Upload do
       allow(File).to receive(:readable?).with(file_path).and_return(true)
     end
 
-    context 'when file is valid with minimal options' do
-      before { allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake sourcemap')) }
+    context 'when file is valid' do
+      before { allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake dsym')) }
 
       it 'uploads successfully' do
         stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
           .to_return(status: 200, body: { status: 'ok' }.to_json)
 
-        expect { upload.react_native_sourcemap(file_path) }.to output(include('uploaded successfully')).to_stdout
+        expect { upload.react_native_ios(file_path) }.to output(include('uploaded successfully')).to_stdout
       end
 
       it 'shows error on upload failure' do
         stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
           .to_return(status: 500, body: { error: 'Server error' }.to_json)
 
-        expect { upload.react_native_sourcemap(file_path) }.to output(include('Upload failed')).to_stdout.and raise_error(SystemExit)
-      end
-    end
-
-    context 'when file is valid with all options' do
-      let(:options) do
-        {
-          app_token: app_token,
-          os: 'android',
-          version_name: '2.0.0',
-          version_code: '10',
-          codepush: 'v5',
-          app_variant: 'prod'
-        }
-      end
-
-      before { allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake sourcemap')) }
-
-      it 'uploads successfully with app_version' do
-        stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
-          .to_return(status: 200, body: { status: 'ok' }.to_json)
-
-        expect { upload.react_native_sourcemap(file_path) }.to output(include('uploaded successfully')).to_stdout
+        expect { upload.react_native_ios(file_path) }.to output(include('Upload failed')).to_stdout.and raise_error(SystemExit)
       end
     end
 
@@ -119,7 +89,7 @@ RSpec.describe Luciq::Commands::Upload do
       before { allow(File).to receive(:exist?).with(file_path).and_return(false) }
 
       it 'exits with error' do
-        expect { upload.react_native_sourcemap(file_path) }.to output(include('File not found')).to_stdout.and raise_error(SystemExit)
+        expect { upload.react_native_ios(file_path) }.to output(include('File not found')).to_stdout.and raise_error(SystemExit)
       end
     end
 
@@ -127,7 +97,60 @@ RSpec.describe Luciq::Commands::Upload do
       before { allow(File).to receive(:readable?).with(file_path).and_return(false) }
 
       it 'exits with error' do
-        expect { upload.react_native_sourcemap(file_path) }.to output(include('Cannot read file')).to_stdout.and raise_error(SystemExit)
+        expect { upload.react_native_ios(file_path) }.to output(include('Cannot read file')).to_stdout.and raise_error(SystemExit)
+      end
+    end
+
+    context 'when file is not a zip' do
+      let(:file_path) { '/tmp/dsyms.txt' }
+
+      it 'exits with error' do
+        expect { upload.react_native_ios(file_path) }.to output(include('must be a .zip archive')).to_stdout.and raise_error(SystemExit)
+      end
+    end
+  end
+
+  describe '#react_native_android' do
+    let(:file_path) { '/tmp/android-sourcemap.txt' }
+    let(:options) { { app_token: app_token, version_code: '1', version_name: '1.0.0' } }
+    let(:upload) { Luciq::Commands::Upload.new(options) }
+
+    before do
+      allow(File).to receive(:exist?).with(file_path).and_return(true)
+      allow(File).to receive(:readable?).with(file_path).and_return(true)
+    end
+
+    context 'when file is valid' do
+      before { allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake sourcemap')) }
+
+      it 'uploads successfully' do
+        stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+          .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+        expect { upload.react_native_android(file_path) }.to output(include('uploaded successfully')).to_stdout
+      end
+
+      it 'shows error on upload failure' do
+        stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+          .to_return(status: 500, body: { error: 'Server error' }.to_json)
+
+        expect { upload.react_native_android(file_path) }.to output(include('Upload failed')).to_stdout.and raise_error(SystemExit)
+      end
+    end
+
+    context 'when file does not exist' do
+      before { allow(File).to receive(:exist?).with(file_path).and_return(false) }
+
+      it 'exits with error' do
+        expect { upload.react_native_android(file_path) }.to output(include('File not found')).to_stdout.and raise_error(SystemExit)
+      end
+    end
+
+    context 'when file is not readable' do
+      before { allow(File).to receive(:readable?).with(file_path).and_return(false) }
+
+      it 'exits with error' do
+        expect { upload.react_native_android(file_path) }.to output(include('Cannot read file')).to_stdout.and raise_error(SystemExit)
       end
     end
   end

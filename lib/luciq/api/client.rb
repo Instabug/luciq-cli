@@ -38,18 +38,34 @@ module Luciq
         end
       end
 
-      def upload_react_native_sourcemap(file_path:, app_token:, os: nil, app_version: nil)
+      def upload_react_native_ios(file_path:, app_token:)
         uri = build_uri('/api/sdk/v3/symbols_files')
 
         File.open(file_path, 'rb') do |file|
           params = {
             'symbols_file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
             'application_token' => app_token,
-            'platform' => 'react_native'
+            'platform' => 'react_native',
+            'os' => 'ios'
           }
 
-          params['os'] = os if os
-          params['app_version'] = app_version.to_json if app_version
+          request = Net::HTTP::Post::Multipart.new(uri.path, params)
+          apply_headers(request)
+          execute(uri, request)
+        end
+      end
+
+      def upload_react_native_android(file_path:, app_token:, app_version:)
+        uri = build_uri('/api/sdk/v3/symbols_files')
+
+        File.open(file_path, 'rb') do |file|
+          params = {
+            'symbols_file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
+            'application_token' => app_token,
+            'platform' => 'react_native',
+            'os' => 'android',
+            'app_version' => app_version.to_json
+          }
 
           request = Net::HTTP::Post::Multipart.new(uri.path, params)
           apply_headers(request)
