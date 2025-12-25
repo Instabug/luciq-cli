@@ -30,6 +30,42 @@ module Luciq
         exit 1
       end
 
+      def react_native_ios(file_path)
+        validate_file!(file_path)
+        validate_zip_extension!(file_path)
+
+        puts "Uploading React Native iOS dSYM: #{File.basename(file_path)}"
+        puts
+
+        @client.upload_react_native_ios(
+          file_path: file_path,
+          app_token: @options[:app_token]
+        )
+
+        puts '✓ React Native iOS dSYM uploaded successfully!'
+      rescue StandardError => e
+        puts "✗ Upload failed: #{e.message}"
+        exit 1
+      end
+
+      def react_native_android(file_path)
+        validate_file!(file_path)
+
+        puts "Uploading React Native Android sourcemap: #{File.basename(file_path)}"
+        puts
+
+        @client.upload_react_native_android(
+          file_path: file_path,
+          app_token: @options[:app_token],
+          app_version: build_app_version
+        )
+
+        puts '✓ React Native Android sourcemap uploaded successfully!'
+      rescue StandardError => e
+        puts "✗ Upload failed: #{e.message}"
+        exit 1
+      end
+
       private
 
       def validate_file!(file_path)
@@ -50,6 +86,15 @@ module Luciq
         puts "✗ File must be a .zip archive: #{file_path}"
         puts '  The ZIP should contain a single text file.'
         exit 1
+      end
+
+      def build_app_version
+        version = {
+          code: @options[:version_code],
+          name: @options[:version_name],
+          codepush: @options[:codepush],
+          app_variant: @options[:app_variant]
+        }.compact
       end
     end
   end
