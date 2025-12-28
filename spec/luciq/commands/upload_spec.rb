@@ -154,5 +154,58 @@ RSpec.describe Luciq::Commands::Upload do
       end
     end
   end
+
+  describe '#ios_dsym' do
+    let(:file_path) { '/tmp/dsym.zip' }
+    let(:options) { { app_token: app_token } }
+    let(:upload) { Luciq::Commands::Upload.new(options) }
+
+    before do
+      allow(File).to receive(:exist?).with(file_path).and_return(true)
+      allow(File).to receive(:readable?).with(file_path).and_return(true)
+    end
+
+    context 'when file is valid with minimal options' do
+      before { allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake dsym')) }
+
+      it 'uploads successfully' do
+        stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+          .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+        expect { upload.ios_dsym(file_path) }.to output(include('uploaded successfully')).to_stdout
+      end
+
+      it 'shows error on upload failure' do
+        stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+          .to_return(status: 500, body: { error: 'Server error' }.to_json)
+
+        expect { upload.ios_dsym(file_path) }.to output(include('Upload failed')).to_stdout.and raise_error(SystemExit)
+      end
+    end
+
+    context 'when file does not exist' do
+      before { allow(File).to receive(:exist?).with(file_path).and_return(false) }
+
+      it 'exits with error' do
+        expect { upload.ios_dsym(file_path) }.to output(include('File not found')).to_stdout.and raise_error(SystemExit)
+      end
+    end
+
+    context 'when file is not readable' do
+      before { allow(File).to receive(:readable?).with(file_path).and_return(false) }
+
+      it 'exits with error' do
+        expect { upload.ios_dsym(file_path) }.to output(include('Cannot read file')).to_stdout.and raise_error(SystemExit)
+      end
+    end
+
+    context 'when file is not a dsym zip' do
+      let(:file_path) { '/tmp/dsym.txt' }
+
+      it 'exits with error' do
+        expect { upload.ios_dsym(file_path) }.to output(include('must be a .zip archive')).to_stdout.and raise_error(SystemExit)
+      end
+    end
+  end
 end
 

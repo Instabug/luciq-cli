@@ -48,6 +48,18 @@ module Luciq
     def react_native_android(file)
       Commands::Upload.new(options).react_native_android(file)
     end
+
+    desc 'ios-dsym FILE', 'Upload iOS dSYM file'
+    long_desc <<~DESC
+      Upload iOS dSYM files to Luciq for crash symbolication.
+      File format: .zip containing dSYM files
+      Example:
+        luciq upload ios-dsym MyApp.dSYM.zip --app-token APP_TOKEN
+    DESC
+    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
+    def ios_dsym(file)
+      Commands::Upload.new(options).ios_dsym(file)
+    end
   end
 
   class CLI < Thor

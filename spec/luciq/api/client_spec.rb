@@ -146,4 +146,36 @@ RSpec.describe Luciq::API::Client do
       end.to raise_error(RuntimeError, /400/)
     end
   end
+
+  describe '#upload_ios_dsym' do
+    let(:file_path) { '/tmp/dsym.zip' }
+
+    before do
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake dsym'))
+    end
+
+    it 'uploads dsym successfully' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_ios_dsym(
+        file_path: file_path,
+        app_token: app_token
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'raises error on failure' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 400, body: { error: 'invalid zip file' }.to_json)
+
+      expect do
+        client.upload_ios_dsym(
+          file_path: file_path,
+          app_token: app_token
+        )
+      end.to raise_error(RuntimeError, /400/)
+    end
+  end
 end
