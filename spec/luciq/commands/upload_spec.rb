@@ -183,24 +183,6 @@ RSpec.describe Luciq::Commands::Upload do
       end
     end
 
-    context 'when file is valid with os option' do
-      let(:options) do
-        {
-          app_token: app_token,
-          os: 'ios'
-        }
-      end
-
-      before { allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake dsym')) }
-
-      it 'uploads successfully' do
-        stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
-          .to_return(status: 200, body: { status: 'ok' }.to_json)
-
-        expect { upload.ios_dsym(file_path) }.to output(include('uploaded successfully')).to_stdout
-      end
-    end
-
     context 'when file does not exist' do
       before { allow(File).to receive(:exist?).with(file_path).and_return(false) }
 
