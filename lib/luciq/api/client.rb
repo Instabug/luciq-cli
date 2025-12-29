@@ -21,6 +21,19 @@ module Luciq
         execute(uri, request)
       end
 
+      def upload_ios_dsym(file_path:, app_token:)
+        uri = build_uri('/api/sdk/v3/symbols_files')
+        File.open(file_path, 'rb') do |file|
+          params = {
+            'symbols_file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
+            'application_token' => app_token
+          }
+          request = Net::HTTP::Post::Multipart.new(uri.path, params)
+          apply_headers(request)
+          execute(uri, request)
+        end
+      end
+
       def upload_android_mapping(file_path:, app_token:, version_code:, version_name:)
         uri = build_uri('/api/web/public/mappings')
 
@@ -67,19 +80,6 @@ module Luciq
             'app_version' => app_version.to_json
           }
 
-          request = Net::HTTP::Post::Multipart.new(uri.path, params)
-          apply_headers(request)
-          execute(uri, request)
-        end
-      end
-
-      def upload_ios_dsym(file_path:, app_token:)
-        uri = build_uri('/api/sdk/v3/symbols_files')
-        File.open(file_path, 'rb') do |file|
-          params = {
-            'symbols_file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
-            'application_token' => app_token
-          }
           request = Net::HTTP::Post::Multipart.new(uri.path, params)
           apply_headers(request)
           execute(uri, request)

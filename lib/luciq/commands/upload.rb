@@ -10,6 +10,23 @@ module Luciq
         @client = API::Client.new
       end
 
+      def ios_dsym(file_path)
+        validate_file!(file_path)
+        validate_zip_extension!(file_path)
+        puts "Uploading iOS dSYM file: #{File.basename(file_path)}"
+        puts
+
+        @client.upload_ios_dsym(
+          file_path: file_path,
+          app_token: @options[:app_token]
+        )
+
+        puts '✓ iOS dSYM file uploaded successfully!'
+      rescue StandardError => e
+        puts "✗ Upload failed: #{e.message}"
+        exit 1
+      end
+
       def android_mapping(file_path)
         validate_file!(file_path)
         validate_zip_extension!(file_path)
@@ -61,23 +78,6 @@ module Luciq
         )
 
         puts '✓ React Native Android mapping file uploaded successfully!'
-      rescue StandardError => e
-        puts "✗ Upload failed: #{e.message}"
-        exit 1
-      end
-
-      def ios_dsym(file_path)
-        validate_file!(file_path)
-        validate_zip_extension!(file_path)
-        puts "Uploading iOS dSYM file: #{File.basename(file_path)}"
-        puts
-
-        @client.upload_ios_dsym(
-          file_path: file_path,
-          app_token: @options[:app_token]
-        )
-
-        puts '✓ iOS dSYM file uploaded successfully!'
       rescue StandardError => e
         puts "✗ Upload failed: #{e.message}"
         exit 1

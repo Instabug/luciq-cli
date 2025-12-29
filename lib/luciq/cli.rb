@@ -7,6 +7,18 @@ require 'luciq/commands/upload'
 
 module Luciq
   class UploadCLI < Thor
+    desc 'ios-dsym FILE', 'Upload iOS dSYM file'
+    long_desc <<~DESC
+      Upload iOS dSYM files to Luciq for crash symbolication.
+      File format: .zip containing dSYM files
+      Example:
+        luciq upload ios-dsym MyApp.dSYM.zip --app-token APP_TOKEN
+    DESC
+    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
+    def ios_dsym(file)
+      Commands::Upload.new(options).ios_dsym(file)
+    end
+
     desc 'android-mapping FILE', 'Upload Android mapping file'
     long_desc <<~DESC
       Upload Android mapping files to Luciq for crash symbolication.
@@ -47,18 +59,6 @@ module Luciq
     option :app_variant, type: :string, desc: 'App variant (e.g., prod, staging)'
     def react_native_android_mapping(file)
       Commands::Upload.new(options).react_native_android_mapping(file)
-    end
-
-    desc 'ios-dsym FILE', 'Upload iOS dSYM file'
-    long_desc <<~DESC
-      Upload iOS dSYM files to Luciq for crash symbolication.
-      File format: .zip containing dSYM files
-      Example:
-        luciq upload ios-dsym MyApp.dSYM.zip --app-token APP_TOKEN
-    DESC
-    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
-    def ios_dsym(file)
-      Commands::Upload.new(options).ios_dsym(file)
     end
 
     desc 'flutter-ios-dsym FILE', 'Upload Flutter iOS dSYM file'
