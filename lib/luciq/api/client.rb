@@ -38,7 +38,7 @@ module Luciq
         end
       end
 
-      def upload_react_native_ios(file_path:, app_token:)
+      def upload_react_native_ios_dsym(file_path:, app_token:)
         uri = build_uri('/api/sdk/v3/symbols_files')
 
         File.open(file_path, 'rb') do |file|
@@ -55,7 +55,7 @@ module Luciq
         end
       end
 
-      def upload_react_native_android(file_path:, app_token:, app_version:)
+      def upload_react_native_android_mapping(file_path:, app_token:, app_version:)
         uri = build_uri('/api/sdk/v3/symbols_files')
 
         File.open(file_path, 'rb') do |file|

@@ -30,14 +30,14 @@ module Luciq
         exit 1
       end
 
-      def react_native_ios(file_path)
+      def react_native_ios_dsym(file_path)
         validate_file!(file_path)
         validate_zip_extension!(file_path)
 
         puts "Uploading React Native iOS dSYM: #{File.basename(file_path)}"
         puts
 
-        @client.upload_react_native_ios(
+        @client.upload_react_native_ios_dsym(
           file_path: file_path,
           app_token: @options[:app_token]
         )
@@ -48,19 +48,19 @@ module Luciq
         exit 1
       end
 
-      def react_native_android(file_path)
+      def react_native_android_mapping(file_path)
         validate_file!(file_path)
 
-        puts "Uploading React Native Android sourcemap: #{File.basename(file_path)}"
+        puts "Uploading React Native Android mapping file: #{File.basename(file_path)}"
         puts
 
-        @client.upload_react_native_android(
+        @client.upload_react_native_android_mapping(
           file_path: file_path,
           app_token: @options[:app_token],
           app_version: build_app_version
         )
 
-        puts '✓ React Native Android sourcemap uploaded successfully!'
+        puts '✓ React Native Android mapping file uploaded successfully!'
       rescue StandardError => e
         puts "✗ Upload failed: #{e.message}"
         exit 1

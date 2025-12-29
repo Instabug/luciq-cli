@@ -21,32 +21,32 @@ module Luciq
       Commands::Upload.new(options).android_mapping(file)
     end
 
-    desc 'react-native-ios FILE', 'Upload React Native iOS dSYM file'
+    desc 'react-native-ios-dsym FILE', 'Upload React Native iOS dSYM file'
     long_desc <<~DESC
-      Upload React Native iOS dSYM files to Instabug for crash symbolication.
+      Upload React Native iOS dSYM files to Luciq for crash symbolication.
       File format: .zip containing dSYM files
       Example:
-        luciq upload react-native-ios dsyms.zip --app-token APP_TOKEN
+        luciq upload react-native-ios-dsym dsyms.zip --app-token APP_TOKEN
     DESC
     option :app_token, type: :string, required: true, desc: 'Your application token'
-    def react_native_ios(file)
-      Commands::Upload.new(options).react_native_ios(file)
+    def react_native_ios_dsym(file)
+      Commands::Upload.new(options).react_native_ios_dsym(file)
     end
 
-    desc 'react-native-android FILE', 'Upload React Native Android sourcemap file'
+    desc 'react-native-android-mapping FILE', 'Upload React Native Android mapping file'
     long_desc <<~DESC
-      Upload React Native Android sourcemap files to Instabug for crash symbolication.
-      File format: .txt sourcemap file
+      Upload React Native Android mapping files to Luciq for crash deobfuscation.
+      File format: .txt mapping file
       Example:
-        luciq upload react-native-android android-sourcemap.txt --app-token APP_TOKEN --version-code 1 --version-name 1.0.0
+        luciq upload react-native-android-mapping mapping.txt --app-token APP_TOKEN --version-code 1 --version-name 1.0.0
     DESC
     option :app_token, type: :string, required: true, desc: 'Your application token'
     option :version_code, type: :string, required: true, desc: 'App version code (e.g., 1)'
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     option :codepush, type: :string, desc: 'CodePush version label (e.g., v42)'
     option :app_variant, type: :string, desc: 'App variant (e.g., prod, staging)'
-    def react_native_android(file)
-      Commands::Upload.new(options).react_native_android(file)
+    def react_native_android_mapping(file)
+      Commands::Upload.new(options).react_native_android_mapping(file)
     end
 
     desc 'ios-dsym FILE', 'Upload iOS dSYM file'
