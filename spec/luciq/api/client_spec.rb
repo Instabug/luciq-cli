@@ -178,4 +178,151 @@ RSpec.describe Luciq::API::Client do
       end.to raise_error(RuntimeError, /400/)
     end
   end
+
+  describe '#upload_flutter_ios_dsym' do
+    let(:file_path) { '/tmp/flutter.dSYM.zip' }
+
+    before do
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake dsym'))
+    end
+
+    it 'uploads dsym successfully' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_flutter_ios_dsym(
+        file_path: file_path,
+        app_token: app_token
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'raises error on failure' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 400, body: { error: 'invalid zip file' }.to_json)
+
+      expect do
+        client.upload_flutter_ios_dsym(
+          file_path: file_path,
+          app_token: app_token
+        )
+      end.to raise_error(RuntimeError, /400/)
+    end
+  end
+
+  describe '#upload_flutter_android_mapping' do
+    let(:file_path) { '/tmp/flutter-mapping.txt' }
+
+    before do
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake mapping'))
+    end
+
+    it 'uploads mapping file successfully' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_flutter_android_mapping(
+        file_path: file_path,
+        app_token: app_token,
+        app_version: { code: '1', name: '1.0.0' }
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'uploads mapping file with app_variant' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_flutter_android_mapping(
+        file_path: file_path,
+        app_token: app_token,
+        app_version: { code: '1', name: '1.0.0', app_variant: 'prod' }
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'raises error on failure' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 400, body: { error: 'invalid file' }.to_json)
+
+      expect do
+        client.upload_flutter_android_mapping(
+          file_path: file_path,
+          app_token: app_token,
+          app_version: { code: '1', name: '1.0.0' }
+        )
+      end.to raise_error(RuntimeError, /400/)
+    end
+  end
+
+  describe '#upload_flutter_ios_sourcemap' do
+    let(:file_path) { '/tmp/flutter-ios.symbols.zip' }
+
+    before do
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake symbols'))
+    end
+
+    it 'uploads sourcemap successfully' do
+      stub_request(:post, "#{base_url}/api/web/public/flutter-symbol-files/ios")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_flutter_ios_sourcemap(
+        file_path: file_path,
+        app_token: app_token,
+        version_name: '1.0.0',
+        version_code: '1'
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'raises error on failure' do
+      stub_request(:post, "#{base_url}/api/web/public/flutter-symbol-files/ios")
+        .to_return(status: 400, body: { error: 'invalid zip file' }.to_json)
+
+      expect do
+        client.upload_flutter_ios_sourcemap(
+          file_path: file_path,
+          app_token: app_token,
+          version_name: '1.0.0',
+          version_code: '1'
+        )
+      end.to raise_error(RuntimeError, /400/)
+    end
+  end
+
+  describe '#upload_flutter_android_sourcemap' do
+    let(:file_path) { '/tmp/flutter-android.symbols.zip' }
+
+    before do
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake symbols'))
+    end
+
+    it 'uploads sourcemap successfully' do
+      stub_request(:post, "#{base_url}/api/web/public/flutter-symbol-files/android")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_flutter_android_sourcemap(
+        file_path: file_path,
+        app_token: app_token
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'raises error on failure' do
+      stub_request(:post, "#{base_url}/api/web/public/flutter-symbol-files/android")
+        .to_return(status: 400, body: { error: 'invalid zip file' }.to_json)
+
+      expect do
+        client.upload_flutter_android_sourcemap(
+          file_path: file_path,
+          app_token: app_token
+        )
+      end.to raise_error(RuntimeError, /400/)
+    end
+  end
 end

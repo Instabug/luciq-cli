@@ -86,6 +86,65 @@ module Luciq
         end
       end
 
+      def upload_flutter_ios_dsym(file_path:, app_token:)
+        uri = build_uri('/api/sdk/v3/symbols_files')
+        File.open(file_path, 'rb') do |file|
+          params = {
+            'symbols_file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
+            'application_token' => app_token,
+            'platform' => 'flutter',
+            'os' => 'ios'
+          }
+          request = Net::HTTP::Post::Multipart.new(uri.path, params)
+          apply_headers(request)
+          execute(uri, request)
+        end
+      end
+
+      def upload_flutter_android_mapping(file_path:, app_token:, app_version:)
+        uri = build_uri('/api/sdk/v3/symbols_files')
+        File.open(file_path, 'rb') do |file|
+          params = {
+            'symbols_file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
+            'application_token' => app_token,
+            'platform' => 'flutter',
+            'os' => 'android',
+            'app_version' => app_version.to_json
+          }
+          request = Net::HTTP::Post::Multipart.new(uri.path, params)
+          apply_headers(request)
+          execute(uri, request)
+        end
+      end
+
+      def upload_flutter_ios_sourcemap(file_path:, app_token:, version_name:, version_code:)
+        uri = build_uri('/api/web/public/flutter-symbol-files/ios')
+        File.open(file_path, 'rb') do |file|
+          params = {
+            'file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
+            'application_token' => app_token,
+            'app_version_name' => version_name,
+            'app_version_code' => version_code
+          }
+          request = Net::HTTP::Post::Multipart.new(uri.path, params)
+          apply_headers(request)
+          execute(uri, request)
+        end
+      end
+
+      def upload_flutter_android_sourcemap(file_path:, app_token:)
+        uri = build_uri('/api/web/public/flutter-symbol-files/android')
+        File.open(file_path, 'rb') do |file|
+          params = {
+            'file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
+            'application_token' => app_token
+          }
+          request = Net::HTTP::Post::Multipart.new(uri.path, params)
+          apply_headers(request)
+          execute(uri, request)
+        end
+      end
+
       private
 
       def build_uri(path)
