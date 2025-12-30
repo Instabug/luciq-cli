@@ -68,18 +68,18 @@ RSpec.describe Luciq::API::Client do
     end
   end
 
-  describe '#upload_react_native_ios' do
+  describe '#upload_react_native_ios_dsym' do
     let(:file_path) { '/tmp/dsyms.zip' }
 
     before do
       allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake dsym'))
     end
 
-    it 'uploads sourcemap successfully' do
+    it 'uploads dsym successfully' do
       stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
         .to_return(status: 200, body: { status: 'ok' }.to_json)
 
-      response = client.upload_react_native_ios(
+      response = client.upload_react_native_ios_dsym(
         file_path: file_path,
         app_token: app_token
       )
@@ -89,10 +89,10 @@ RSpec.describe Luciq::API::Client do
 
     it 'raises error on failure' do
       stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
-        .to_return(status: 400, body: { error: 'invalid sourcemap' }.to_json)
+        .to_return(status: 400, body: { error: 'invalid dsym' }.to_json)
 
       expect do
-        client.upload_react_native_ios(
+        client.upload_react_native_ios_dsym(
           file_path: file_path,
           app_token: app_token
         )
@@ -100,18 +100,18 @@ RSpec.describe Luciq::API::Client do
     end
   end
 
-  describe '#upload_react_native_android' do
-    let(:file_path) { '/tmp/android-sourcemap.txt' }
+  describe '#upload_react_native_android_mapping' do
+    let(:file_path) { '/tmp/android-mapping.txt' }
 
     before do
-      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake sourcemap'))
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake mapping'))
     end
 
-    it 'uploads sourcemap successfully' do
+    it 'uploads mapping successfully' do
       stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
         .to_return(status: 200, body: { status: 'ok' }.to_json)
 
-      response = client.upload_react_native_android(
+      response = client.upload_react_native_android_mapping(
         file_path: file_path,
         app_token: app_token,
         app_version: { code: '1', name: '1.0.0' }
@@ -120,11 +120,11 @@ RSpec.describe Luciq::API::Client do
       expect(response['status']).to eq('ok')
     end
 
-    it 'uploads sourcemap with all app_version options' do
+    it 'uploads mapping with all app_version options' do
       stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
         .to_return(status: 200, body: { status: 'ok' }.to_json)
 
-      response = client.upload_react_native_android(
+      response = client.upload_react_native_android_mapping(
         file_path: file_path,
         app_token: app_token,
         app_version: { code: '10', name: '2.0.0', codepush: 'v5', app_variant: 'prod' }
@@ -135,10 +135,10 @@ RSpec.describe Luciq::API::Client do
 
     it 'raises error on failure' do
       stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
-        .to_return(status: 400, body: { error: 'invalid sourcemap' }.to_json)
+        .to_return(status: 400, body: { error: 'invalid mapping' }.to_json)
 
       expect do
-        client.upload_react_native_android(
+        client.upload_react_native_android_mapping(
           file_path: file_path,
           app_token: app_token,
           app_version: { code: '1', name: '1.0.0' }
@@ -172,6 +172,153 @@ RSpec.describe Luciq::API::Client do
 
       expect do
         client.upload_ios_dsym(
+          file_path: file_path,
+          app_token: app_token
+        )
+      end.to raise_error(RuntimeError, /400/)
+    end
+  end
+
+  describe '#upload_flutter_ios_dsym' do
+    let(:file_path) { '/tmp/flutter.dSYM.zip' }
+
+    before do
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake dsym'))
+    end
+
+    it 'uploads dsym successfully' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_flutter_ios_dsym(
+        file_path: file_path,
+        app_token: app_token
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'raises error on failure' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 400, body: { error: 'invalid zip file' }.to_json)
+
+      expect do
+        client.upload_flutter_ios_dsym(
+          file_path: file_path,
+          app_token: app_token
+        )
+      end.to raise_error(RuntimeError, /400/)
+    end
+  end
+
+  describe '#upload_flutter_android_mapping' do
+    let(:file_path) { '/tmp/flutter-mapping.txt' }
+
+    before do
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake mapping'))
+    end
+
+    it 'uploads mapping file successfully' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_flutter_android_mapping(
+        file_path: file_path,
+        app_token: app_token,
+        app_version: { code: '1', name: '1.0.0' }
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'uploads mapping file with app_variant' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_flutter_android_mapping(
+        file_path: file_path,
+        app_token: app_token,
+        app_version: { code: '1', name: '1.0.0', app_variant: 'prod' }
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'raises error on failure' do
+      stub_request(:post, "#{base_url}/api/sdk/v3/symbols_files")
+        .to_return(status: 400, body: { error: 'invalid file' }.to_json)
+
+      expect do
+        client.upload_flutter_android_mapping(
+          file_path: file_path,
+          app_token: app_token,
+          app_version: { code: '1', name: '1.0.0' }
+        )
+      end.to raise_error(RuntimeError, /400/)
+    end
+  end
+
+  describe '#upload_flutter_ios_sourcemap' do
+    let(:file_path) { '/tmp/flutter-ios.symbols.zip' }
+
+    before do
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake symbols'))
+    end
+
+    it 'uploads sourcemap successfully' do
+      stub_request(:post, "#{base_url}/api/web/public/flutter-symbol-files/ios")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_flutter_ios_sourcemap(
+        file_path: file_path,
+        app_token: app_token,
+        version_name: '1.0.0',
+        version_code: '1'
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'raises error on failure' do
+      stub_request(:post, "#{base_url}/api/web/public/flutter-symbol-files/ios")
+        .to_return(status: 400, body: { error: 'invalid zip file' }.to_json)
+
+      expect do
+        client.upload_flutter_ios_sourcemap(
+          file_path: file_path,
+          app_token: app_token,
+          version_name: '1.0.0',
+          version_code: '1'
+        )
+      end.to raise_error(RuntimeError, /400/)
+    end
+  end
+
+  describe '#upload_flutter_android_sourcemap' do
+    let(:file_path) { '/tmp/flutter-android.symbols.zip' }
+
+    before do
+      allow(File).to receive(:open).with(file_path, 'rb').and_yield(StringIO.new('fake symbols'))
+    end
+
+    it 'uploads sourcemap successfully' do
+      stub_request(:post, "#{base_url}/api/web/public/flutter-symbol-files/android")
+        .to_return(status: 200, body: { status: 'ok' }.to_json)
+
+      response = client.upload_flutter_android_sourcemap(
+        file_path: file_path,
+        app_token: app_token
+      )
+
+      expect(response['status']).to eq('ok')
+    end
+
+    it 'raises error on failure' do
+      stub_request(:post, "#{base_url}/api/web/public/flutter-symbol-files/android")
+        .to_return(status: 400, body: { error: 'invalid zip file' }.to_json)
+
+      expect do
+        client.upload_flutter_android_sourcemap(
           file_path: file_path,
           app_token: app_token
         )
