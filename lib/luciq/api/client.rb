@@ -73,16 +73,11 @@ module Luciq
       end
 
       def upload_flutter_ios_sourcemap(file_path:, app_token:, version_name:, version_code:)
-        uri = build_uri(FLUTTER_IOS_SYMBOLS_PATH)
-        File.open(file_path, 'rb') do |file|
-          params = {
-            'file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
-            'application_token' => app_token,
-            'app_version_name' => version_name,
-            'app_version_code' => version_code
-          }
-          post_multipart(uri, params)
-        end
+        upload_flutter_symbols(
+          FLUTTER_IOS_SYMBOLS_PATH,
+          file_path: file_path, app_token: app_token,
+          version_name: version_name, version_code: version_code
+        )
       end
 
       def upload_flutter_android_mapping(file_path:, app_token:, version_code:, version_name:)
@@ -93,16 +88,11 @@ module Luciq
       end
 
       def upload_flutter_android_sourcemap(file_path:, app_token:, version_name:, version_code:)
-        uri = build_uri(FLUTTER_ANDROID_SYMBOLS_PATH)
-        File.open(file_path, 'rb') do |file|
-          params = {
-            'file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
-            'application_token' => app_token,
-            'app_version_name' => version_name,
-            'app_version_code' => version_code
-          }
-          post_multipart(uri, params)
-        end
+        upload_flutter_symbols(
+          FLUTTER_ANDROID_SYMBOLS_PATH,
+          file_path: file_path, app_token: app_token,
+          version_name: version_name, version_code: version_code
+        )
       end
 
       def upload_flutter_ndk(file_path:, app_token:, app_version:, arch:)
@@ -158,6 +148,19 @@ module Luciq
             'application_token' => app_token,
             'app_version' => app_version,
             'arch' => arch
+          }
+          post_multipart(uri, params)
+        end
+      end
+
+      def upload_flutter_symbols(path, file_path:, app_token:, version_name:, version_code:)
+        uri = build_uri(path)
+        File.open(file_path, 'rb') do |file|
+          params = {
+            'file' => UploadIO.new(file, 'application/octet-stream', File.basename(file_path)),
+            'application_token' => app_token,
+            'app_version_name' => version_name,
+            'app_version_code' => version_code
           }
           post_multipart(uri, params)
         end
