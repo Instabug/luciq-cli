@@ -17,5 +17,8 @@ Metrics/AbcSize:
 Metrics/ClassLength:
   Max: 200
 
+Metrics/ModuleLength:
+  Max: 150
+
 Layout/LineLength:
   Max: 120

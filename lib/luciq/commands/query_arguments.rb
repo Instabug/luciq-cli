@@ -26,6 +26,16 @@ module Luciq
         { sort_by: @options[:sort_by], direction: @options[:direction] }.compact
       end
 
+      def sort_dir_args
+        { sort_by: @options[:sort_by], sort_direction: @options[:sort_direction] }.compact
+      end
+
+      def apm_sort_arg
+        return {} unless @options[:sort]
+
+        { sort: [parse_json(@options[:sort], '--sort')] }
+      end
+
       def crash_filters
         f = raw_filters
         ids = map_ids(CRASH_STATUS_IDS, @options[:status])
@@ -58,7 +68,7 @@ module Luciq
       def review_filters
         f = raw_filters
         f['rating'] = Array(@options[:rating]).map(&:to_i) if @options[:rating]
-        f['country'] = @options[:country] if @options[:country]
+        f['country'] = Array(@options[:country]) if @options[:country]
         f['os'] = Array(@options[:os]) if @options[:os]
         f
       end
@@ -70,14 +80,41 @@ module Luciq
         f
       end
 
+      def opportunity_filters
+        f = raw_filters
+        f['status'] = Array(@options[:status]) if @options[:status]
+        f['priority'] = Array(@options[:priority]) if @options[:priority]
+        f['team_id'] = @options[:team_id] if @options[:team_id]
+        f
+      end
+
+      def incident_filters
+        f = raw_filters
+        f['status'] = Array(@options[:status]) if @options[:status]
+        f['type'] = Array(@options[:type]) if @options[:type]
+        f
+      end
+
       # Top-level (non-filter) changes for `bugs update`.
       def bug_update_changes
+        action = bug_duplicate_action
+        if action && (@options[:status] || @options[:priority])
+          raise 'Duplicate marking cannot be combined with --status/--priority'
+        end
+
         {
           status_id: map_one(BUG_STATUS_IDS, @options[:status]),
           priority_id: map_one(BUG_PRIORITY_IDS, @options[:priority]),
           tags: @options[:tags],
+          action: action,
           original_bug_number: @options[:duplicate_of]
         }.compact
+      end
+
+      def bug_duplicate_action
+        return @options[:action] if @options[:action]
+
+        'mark_as_duplicate' if @options[:duplicate_of]
       end
 
       def filters_arg(filters)
@@ -95,6 +132,15 @@ module Luciq
 
         parsed = parse_json(@options[:filters], '--filters')
         raise '--filters must be a JSON object' unless parsed.is_a?(Hash)
+
+        parsed
+      end
+
+      def alert_payload
+        return {} unless @options[:payload]
+
+        parsed = parse_json(@options[:payload], '--payload')
+        raise '--payload must be a JSON object' unless parsed.is_a?(Hash)
 
         parsed
       end

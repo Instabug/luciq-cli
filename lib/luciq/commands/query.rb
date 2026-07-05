@@ -71,15 +71,16 @@ module Luciq
       def apm_groups
         execute('apm_list_groups') do
           base_args.merge({ metric: @options[:metric] }.compact, page_args)
-                   .merge(json_arg(:sort, @options[:sort]), filters_arg(raw_filters))
+                   .merge(apm_sort_arg, filters_arg(raw_filters))
         end
       end
 
       def apm_group
         group = { metric: @options[:metric], group_uuid: @options[:group_uuid],
                   group_url: @options[:group_url], method: @options[:method] }.compact
+        views = @options[:views] ? json_arg(:views, @options[:views]) : { views: ['summary'] }
         execute('apm_group_view') do
-          base_args.merge(group).merge(json_arg(:views, @options[:views]), filters_arg(raw_filters))
+          base_args.merge(group).merge(views, filters_arg(raw_filters))
         end
       end
 
@@ -92,11 +93,32 @@ module Luciq
         execute('apm_occurrence') { base_args.merge(selector).merge(filters_arg(raw_filters)) }
       end
 
+      def apm_funnel_events
+        params = { event_type: @options[:event_type], q: @options[:q], limit: @options[:limit] }.compact
+        execute('apm_funnel_events') { base_args.merge(params) }
+      end
+
+      def apm_funnel_create
+        execute('apm_funnel_write') do
+          base_args.merge(operation: 'create', name: @options[:name]).merge(json_arg(:events, @options[:events]))
+        end
+      end
+
+      def apm_funnel_update
+        changes = { ulid: @options[:ulid], name: @options[:name] }.compact
+        execute('apm_funnel_write') do
+          base_args.merge(operation: 'update').merge(changes, json_arg(:events, @options[:events]))
+        end
+      end
+
+      def apm_funnel_delete
+        execute('apm_funnel_write') { base_args.merge(operation: 'delete', ulid: @options[:ulid]) }
+      end
+
       # --- Reviews -----------------------------------------------------------
       def reviews_list
-        sort = { sort_by: @options[:sort_by], sort_direction: @options[:sort_direction] }.compact
         execute('list_reviews') do
-          base_args.merge(page_args, sort).merge(filters_arg(review_filters))
+          base_args.merge(page_args, sort_dir_args).merge(filters_arg(review_filters))
         end
       end
 
@@ -112,13 +134,73 @@ module Luciq
 
       # --- Applications & health --------------------------------------------
       def apps_list
-        execute('list_applications') do
-          { offset: @options[:offset], limit: @options[:limit], platform: @options[:platform] }.compact
-        end
+        execute('list_applications') { page_args.merge({ platform: @options[:platform] }.compact) }
       end
 
       def insights
         execute('app_insights') { base_args.merge(filters_arg(raw_filters)) }
+      end
+
+      # --- Issues ------------------------------------------------------------
+      def issues_list
+        top = { top_issues: @options[:top_issues] }.compact
+        execute('list_issues') do
+          base_args.merge({ limit: @options[:limit] }.compact, sort_dir_args, top)
+                   .merge(json_arg(:pagination, @options[:pagination]), filters_arg(raw_filters))
+        end
+      end
+
+      # --- Opportunities -----------------------------------------------------
+      def opportunities_list
+        execute('list_opportunities') { base_args.merge(page_args, filters_arg(opportunity_filters)) }
+      end
+
+      def opportunity_show(id)
+        execute('opportunity_details') { base_args.merge(id: id) }
+      end
+
+      # --- Alerts (rules) ----------------------------------------------------
+      def alerts_list
+        execute('read_alerts') { base_args.merge(action: 'list').merge(sort_dir_args) }
+      end
+
+      def alert_show(ulid)
+        execute('read_alerts') { base_args.merge(action: 'details', ulid: ulid) }
+      end
+
+      def alerts_init
+        execute('read_alerts') { base_args.merge(action: 'init') }
+      end
+
+      def alert_create
+        execute('write_alerts') { alert_payload.merge(base_args).merge(action: 'create') }
+      end
+
+      def alert_update(ulid)
+        execute('write_alerts') { alert_payload.merge(base_args).merge(action: 'update', ulid: ulid) }
+      end
+
+      def alert_delete(ulid)
+        execute('write_alerts') { base_args.merge(action: 'delete', ulid: ulid) }
+      end
+
+      # --- Incidents (triggered alerts) --------------------------------------
+      def incidents_list
+        execute('read_incidents') do
+          base_args.merge(action: 'list').merge(page_args, sort_dir_args, filters_arg(incident_filters))
+        end
+      end
+
+      def incident_show(ulid)
+        execute('read_incidents') { base_args.merge(action: 'details', ulid: ulid) }
+      end
+
+      def incident_resolve(ulid)
+        execute('write_incidents') { base_args.merge(action: 'resolve', ulid: ulid) }
+      end
+
+      def incident_reopen(ulid)
+        execute('write_incidents') { base_args.merge(action: 'reopen', ulid: ulid) }
       end
 
       private
