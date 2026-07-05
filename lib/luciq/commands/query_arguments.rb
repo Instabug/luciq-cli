@@ -102,13 +102,16 @@ module Luciq
           raise 'Duplicate marking cannot be combined with --status/--priority'
         end
 
-        {
+        changes = {
           status_id: map_one(BUG_STATUS_IDS, @options[:status]),
           priority_id: map_one(BUG_PRIORITY_IDS, @options[:priority]),
-          tags: @options[:tags],
+          tags: (@options[:clear_tags] ? [] : @options[:tags]),
           action: action,
           original_bug_number: @options[:duplicate_of]
         }.compact
+        return changes unless changes.empty?
+
+        raise 'Provide at least one change (--status/--priority/--tags/--clear-tags/--duplicate-of/--action)'
       end
 
       def bug_duplicate_action
@@ -142,7 +145,7 @@ module Luciq
         parsed = parse_json(@options[:payload], '--payload')
         raise '--payload must be a JSON object' unless parsed.is_a?(Hash)
 
-        parsed
+        parsed.transform_keys(&:to_sym)
       end
 
       def parse_json(str, label)

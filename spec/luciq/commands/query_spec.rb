@@ -86,6 +86,22 @@ RSpec.describe Luciq::Commands::Query do
 
       expect { described_class.new(options).bug_update(7) }.to output.to_stdout
     end
+
+    it 'clears all tags when --clear-tags is set' do
+      options = { slug: 'a', mode: 'production', clear_tags: true }
+
+      expect(client).to receive(:invoke_tool)
+        .with('update_bug', { slug: 'a', mode: 'production', number: 7, tags: [] })
+        .and_return({})
+
+      expect { described_class.new(options).bug_update(7) }.to output.to_stdout
+    end
+
+    it 'refuses a no-op update with no change flags' do
+      expect(client).not_to receive(:invoke_tool)
+      expect { described_class.new({ slug: 'a', mode: 'production' }).bug_update(7) }
+        .to output(/at least one change/).to_stdout.and raise_error(SystemExit)
+    end
   end
 
   describe '#apm_groups' do
@@ -119,6 +135,16 @@ RSpec.describe Luciq::Commands::Query do
 
       expect(client).to receive(:invoke_tool).with(
         'apm_group_view', hash_including(views: %w[summary spans_table])
+      ).and_return({})
+
+      expect { described_class.new(options).apm_group }.to output.to_stdout
+    end
+
+    it 'identifies the group by --group-url when --group-uuid is absent' do
+      options = { slug: 'a', mode: 'production', metric: 'network', group_url: 'https://example.com/x' }
+
+      expect(client).to receive(:invoke_tool).with(
+        'apm_group_view', hash_including(metric: 'network', group_url: 'https://example.com/x')
       ).and_return({})
 
       expect { described_class.new(options).apm_group }.to output.to_stdout
@@ -294,7 +320,7 @@ RSpec.describe Luciq::Commands::Query do
       options = { slug: 'a', mode: 'production', payload: '{"type":"Crashes","title":"t"}' }
 
       expect(client).to receive(:invoke_tool).with(
-        'write_alerts', hash_including(action: 'create', 'type' => 'Crashes', 'title' => 't')
+        'write_alerts', hash_including(action: 'create', type: 'Crashes', title: 't')
       ).and_return({})
 
       expect { described_class.new(options).alert_create }.to output.to_stdout
@@ -304,7 +330,7 @@ RSpec.describe Luciq::Commands::Query do
       options = { slug: 'a', mode: 'production', payload: '{"title":"t2"}' }
 
       expect(client).to receive(:invoke_tool).with(
-        'write_alerts', hash_including(action: 'update', ulid: 'crashes_01HX', 'title' => 't2')
+        'write_alerts', hash_including(action: 'update', ulid: 'crashes_01HX', title: 't2')
       ).and_return({})
 
       expect { described_class.new(options).alert_update('crashes_01HX') }.to output.to_stdout
@@ -428,6 +454,14 @@ RSpec.describe Luciq::Commands::Query do
 
       expect { described_class.new(options).bugs_list }.to output.to_stdout
     end
+
+    it 'omits the filters key entirely when no filter flags are given' do
+      expect(client).to receive(:invoke_tool)
+        .with('list_bugs', { slug: 'a', mode: 'production' })
+        .and_return({})
+
+      expect { described_class.new({ slug: 'a', mode: 'production' }).bugs_list }.to output.to_stdout
+    end
   end
 
   describe '#bug_show' do
@@ -496,6 +530,33 @@ RSpec.describe Luciq::Commands::Query do
       expect(client).not_to receive(:invoke_tool)
       expect { described_class.new({ slug: 'a', mode: 'production' }).crashes_list }
         .to output(/Not authenticated/).to_stdout.and raise_error(SystemExit)
+    end
+  end
+
+  describe 'JSON argument validation' do
+    it 'exits with an error on invalid --events JSON' do
+      options = { slug: 'a', mode: 'production', name: 'F', events: 'oops' }
+
+      expect(client).not_to receive(:invoke_tool)
+      expect { described_class.new(options).apm_funnel_create }
+        .to output(/Invalid --events JSON/).to_stdout.and raise_error(SystemExit)
+    end
+
+    it 'rejects a --payload that is valid JSON but not an object' do
+      options = { slug: 'a', mode: 'production', payload: '[1,2]' }
+
+      expect(client).not_to receive(:invoke_tool)
+      expect { described_class.new(options).alert_create }
+        .to output(/must be a JSON object/).to_stdout.and raise_error(SystemExit)
+    end
+  end
+
+  describe 'client error handling' do
+    it 'prints a friendly message and exits when the client raises' do
+      allow(client).to receive(:invoke_tool).and_raise('boom')
+
+      expect { described_class.new({ slug: 'a', mode: 'production' }).crashes_list }
+        .to output(/✗ boom/).to_stdout.and raise_error(SystemExit)
     end
   end
 end

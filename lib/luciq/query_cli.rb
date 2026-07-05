@@ -133,7 +133,7 @@ module Luciq
       Filters via --filters:
         date_ms        {"gte": <ms>, "lte": <ms>}
         app_versions   ["1.2.3", ...]
-        app_status     ["foreground","background"]
+        app_status     "foreground" | "background"
         devices        ["iPhone15,2", ...]
         os_versions    ["17.4", ...]
         experiments    ["<experiment>", ...]
@@ -162,12 +162,19 @@ module Luciq
     long_desc(<<~DESC, wrap: false)
       List bugs for an application.
 
-      All current filters have typed flags: --status (new/closed/in_progress),
-      --priority (na/trivial/minor/major/blocker), --app-version. The raw --filters
-      object accepts the same keys:
+      Common filters have dedicated flags: --status, --priority, --app-version.
+      Pass any other supported filter as a JSON object via --filters:
         status_id    [1,2,3]  (1=New 2=Closed 3=In Progress)
         priority_id  [-1,1,2,3,4]  (-1=N/A 1=Trivial 2=Minor 3=Major 4=Blocker)
         app_version  ["1.2.3", ...]
+        platform     ["ios","android"]  (cross-platform apps)
+        type         ["<type>", ...]
+        tag          [["login","auth"], ...]  (inner array OR-ed, groups AND-ed)
+        category     [["UI"], ...]
+        devices      ["iPhone 15 Pro", ...]
+        os_versions  ["iOS 17.0", ...]
+        experiments  ["<flag>", ...]
+        reported_at  {"from": <ms>, "to": <ms>}
     DESC
     QueryOptions.app(self)
     QueryOptions.page(self)
@@ -189,8 +196,8 @@ module Luciq
 
     desc 'update', 'Update a bug (status, priority, tags, or mark duplicate)'
     long_desc(<<~DESC, wrap: false)
-      Update a bug. Provide at least one change: --status/--priority/--tags change the
-      bug; duplicate marking is a separate action and can't be combined with them.
+      Update a bug. Provide at least one change: --status/--priority/--tags/--clear-tags
+      change the bug; duplicate marking is a separate action and can't be combined with them.
 
       Mark a duplicate: --duplicate-of <master-number> (implies --action mark_as_duplicate).
       Detach a duplicate: --action unmark_as_duplicate.
@@ -199,7 +206,8 @@ module Luciq
     option :number, type: :numeric, required: true, desc: 'Bug number'
     option :status, type: :string, enum: %w[new closed in_progress], desc: 'New status'
     option :priority, type: :string, enum: %w[na trivial minor major blocker], desc: 'New priority'
-    option :tags, type: :array, desc: 'Tags to set (replaces all; pass none to clear)'
+    option :tags, type: :array, desc: 'Tags to set (replaces all existing tags)'
+    option :clear_tags, type: :boolean, desc: 'Remove all tags'
     option :duplicate_of, type: :numeric, desc: 'Master bug number (marks this a duplicate)'
     option :action, type: :string, enum: %w[mark_as_duplicate unmark_as_duplicate],
                     desc: 'Duplicate action (defaults to mark_as_duplicate with --duplicate-of)'
