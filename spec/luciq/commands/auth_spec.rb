@@ -60,7 +60,8 @@ RSpec.describe Luciq::Commands::Auth do
     end
 
     context 'when token is not provided' do
-      before { ENV.delete('LUCIQ_AUTH_TOKEN') }
+      # A blank token reads as unauthenticated without falling through to ~/.luciqrc (see Config.load_token).
+      before { ENV['LUCIQ_AUTH_TOKEN'] = '' }
 
       it 'prompts to login' do
         expect { auth.whoami }.to output(include('Not authenticated. Run: luciq login')).to_stdout.and raise_error(SystemExit)
@@ -86,7 +87,7 @@ RSpec.describe Luciq::Commands::Auth do
     end
 
     context 'when token is not set' do
-      before { ENV.delete('LUCIQ_AUTH_TOKEN') }
+      before { ENV['LUCIQ_AUTH_TOKEN'] = '' }
 
       it 'shows (not set) for token' do
         expect { auth.info }.to output(include('(not set)')).to_stdout
