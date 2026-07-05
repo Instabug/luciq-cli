@@ -18,17 +18,21 @@ module Luciq
       thor.option :limit, type: :numeric, desc: 'Maximum number of results to return'
     end
 
-    def self.sort(thor)
-      thor.option :sort_by, type: :string, desc: 'Sort field'
+    def self.sort(thor, sort_by_enum: nil)
+      thor.option :sort_by, type: :string, enum: sort_by_enum, desc: 'Sort field'
       thor.option :direction, type: :string, enum: %w[asc desc], desc: 'Sort direction'
     end
 
     def self.raw_filters(thor)
-      thor.option :filters, type: :string, desc: 'Raw filter JSON, merged into the request'
+      thor.option :filters, type: :string,
+                            desc: 'Raw filter JSON object, merged in (typed filter flags win on key conflicts)'
     end
   end
 
   class CrashesCLI < Thor
+    SORT_FIELDS = %w[last_occurred_at occurrences_counter affected_users_counter
+                     max_app_version min_app_version severity first_occurred_at].freeze
+
     desc 'list', 'List crashes for an application'
     long_desc(<<~DESC, wrap: false)
       List crashes for an application.
@@ -51,7 +55,7 @@ module Luciq
     DESC
     QueryOptions.app(self)
     QueryOptions.page(self)
-    QueryOptions.sort(self)
+    QueryOptions.sort(self, sort_by_enum: SORT_FIELDS)
     option :status, type: :array, enum: %w[open closed in_progress], desc: 'Filter by status'
     option :platform, type: :array, enum: %w[IOS ANDROID DART JAVASCRIPT], desc: 'Filter by platform'
     option :type, type: :array, enum: %w[CRASH ANR OOM NON_FATAL], desc: 'Filter by crash type'
@@ -113,7 +117,7 @@ module Luciq
     DESC
     QueryOptions.app(self)
     QueryOptions.page(self)
-    QueryOptions.sort(self)
+    QueryOptions.sort(self, sort_by_enum: SORT_FIELDS)
     option :status, type: :array, enum: %w[open closed in_progress], desc: 'Filter by status'
     option :platform, type: :array, enum: %w[IOS ANDROID DART JAVASCRIPT], desc: 'Filter by platform'
     option :app_version, type: :array, desc: 'Filter by app version(s)'
@@ -184,12 +188,21 @@ module Luciq
     end
 
     desc 'update', 'Update a bug (status, priority, tags, or mark duplicate)'
+    long_desc(<<~DESC, wrap: false)
+      Update a bug. Provide at least one change: --status/--priority/--tags change the
+      bug; duplicate marking is a separate action and can't be combined with them.
+
+      Mark a duplicate: --duplicate-of <master-number> (implies --action mark_as_duplicate).
+      Detach a duplicate: --action unmark_as_duplicate.
+    DESC
     QueryOptions.app(self)
     option :number, type: :numeric, required: true, desc: 'Bug number'
     option :status, type: :string, enum: %w[new closed in_progress], desc: 'New status'
     option :priority, type: :string, enum: %w[na trivial minor major blocker], desc: 'New priority'
-    option :tags, type: :array, desc: 'Tags to set'
-    option :duplicate_of, type: :numeric, desc: 'Bug number this is a duplicate of'
+    option :tags, type: :array, desc: 'Tags to set (replaces all; pass none to clear)'
+    option :duplicate_of, type: :numeric, desc: 'Master bug number (marks this a duplicate)'
+    option :action, type: :string, enum: %w[mark_as_duplicate unmark_as_duplicate],
+                    desc: 'Duplicate action (defaults to mark_as_duplicate with --duplicate-of)'
     def update
       Commands::Query.new(options).bug_update(options[:number])
     end
@@ -197,14 +210,17 @@ module Luciq
 
   class ApmCLI < Thor
     METRICS = %w[network launch flows screen_loading frame_drop].freeze
+    GROUP_METRICS = (METRICS + %w[funnels]).freeze
 
     desc 'groups', 'Rank APM groups worst-first for an application'
     long_desc(<<~DESC, wrap: false)
       Rank APM groups worst-first. --metric is required (network, launch, flows,
-      screen_loading, frame_drop).
+      screen_loading, frame_drop, funnels).
 
-      --sort is a JSON object: {"by": <field>, "direction": "asc"|"desc"}
-        by: failure_rate, p95, p50, apdex, apdex_change, occurrences, dissat_count
+      --sort is a JSON object {"by": <field>, "direction": "asc"|"desc"}; the CLI
+      wraps it in the single-item array the API expects.
+        by: failure_rate, p95, p50, apdex, apdex_change, occurrences, dissat_count,
+            frozen_frames_percent, slow_frames_percent, count, conversion, drop_off, median_time
 
       --filters is a JSON object. Common keys: date_ms {"gte","lte"},
       app_version ["1.2.3"], platform ["ios","android"], group_name, key_metric,
@@ -212,9 +228,9 @@ module Luciq
       --metric; see the Luciq API docs for the full per-metric set.
     DESC
     QueryOptions.app(self)
-    option :metric, type: :string, required: true, enum: METRICS, desc: 'APM metric'
+    option :metric, type: :string, required: true, enum: GROUP_METRICS, desc: 'APM metric'
     QueryOptions.page(self)
-    option :sort, type: :string, desc: 'Sort JSON object ({ "by": ..., "direction": ... })'
+    option :sort, type: :string, desc: 'Sort JSON object {"by":...,"direction":...} (wrapped in a 1-item array)'
     QueryOptions.raw_filters(self)
     def groups
       Commands::Query.new(options).apm_groups
@@ -226,18 +242,18 @@ module Luciq
       required; identify the group with --group-uuid or --group-url. --method
       applies to the network metric.
 
-      --views is a JSON array selecting which panels/tables to return.
+      --views is a JSON array selecting which panels/tables to return (defaults to ["summary"]).
       --filters is a JSON object; keys vary by metric and include date_ms,
       app_version, platform ["ios","android"], device, os_version, country,
       carrier, radio, failure_name, failure_type, response_time_ms,
       custom_attributes, experiment. See the Luciq API docs for the full schema.
     DESC
     QueryOptions.app(self)
-    option :metric, type: :string, required: true, enum: METRICS, desc: 'APM metric'
+    option :metric, type: :string, required: true, enum: GROUP_METRICS, desc: 'APM metric'
     option :group_uuid, type: :string, desc: 'Group UUID (or use --group-url)'
     option :group_url, type: :string, desc: 'Group URL (or use --group-uuid)'
     option :method, type: :string, enum: %w[GET POST PUT PATCH DELETE HEAD OPTIONS], desc: 'HTTP method (network)'
-    option :views, type: :string, desc: 'Views JSON array'
+    option :views, type: :string, desc: 'Views JSON array (defaults to ["summary"])'
     QueryOptions.raw_filters(self)
     def group
       Commands::Query.new(options).apm_group
@@ -269,6 +285,53 @@ module Luciq
     def occurrence
       Commands::Query.new(options).apm_occurrence
     end
+
+    desc 'funnel-events', 'List pickable events for building funnels'
+    long_desc(<<~DESC, wrap: false)
+      List events (network / screen_loading groups) that can be added to a funnel.
+      Narrow with --event-type and/or a name substring via --q.
+    DESC
+    QueryOptions.app(self)
+    option :event_type, type: :string, enum: %w[network screen_loading], desc: 'Event type (default: all)'
+    option :q, type: :string, desc: 'Case-insensitive name substring'
+    option :limit, type: :numeric, desc: 'Max events per type (1-25, default 20)'
+    def funnel_events
+      Commands::Query.new(options).apm_funnel_events
+    end
+
+    desc 'funnel-create', 'Create a funnel'
+    long_desc(<<~DESC, wrap: false)
+      Create a funnel from 2-20 events. --events is a JSON array; each step is one of:
+        {"type":"network","ulid":"<event-ulid>"}
+        {"type":"screen_loading","ulid":"<event-ulid>"}
+        {"type":"user_event","name":"<event-name>"}
+    DESC
+    QueryOptions.app(self)
+    option :name, type: :string, required: true, desc: 'Funnel name'
+    option :events, type: :string, required: true, desc: 'Steps JSON array (2-20 items)'
+    def funnel_create
+      Commands::Query.new(options).apm_funnel_create
+    end
+
+    desc 'funnel-update', 'Update a funnel'
+    long_desc(<<~DESC, wrap: false)
+      Update a funnel. --events (a JSON array of steps, same shape as funnel-create)
+      replaces the funnel's full step set.
+    DESC
+    QueryOptions.app(self)
+    option :ulid, type: :string, required: true, desc: 'Funnel ULID'
+    option :name, type: :string, desc: 'Funnel name'
+    option :events, type: :string, desc: 'Steps JSON array (replaces the full set)'
+    def funnel_update
+      Commands::Query.new(options).apm_funnel_update
+    end
+
+    desc 'funnel-delete', 'Delete a funnel'
+    QueryOptions.app(self)
+    option :ulid, type: :string, required: true, desc: 'Funnel ULID'
+    def funnel_delete
+      Commands::Query.new(options).apm_funnel_delete
+    end
   end
 
   class ReviewsCLI < Thor
@@ -286,8 +349,8 @@ module Luciq
     QueryOptions.page(self)
     option :sort_by, type: :string, enum: %w[date], desc: 'Sort field'
     option :sort_direction, type: :string, enum: %w[asc desc], desc: 'Sort direction'
-    option :rating, type: :array, desc: 'Filter by rating(s) 1-5'
-    option :country, type: :string, desc: 'Filter by country'
+    option :rating, type: :array, enum: %w[1 2 3 4 5], desc: 'Filter by rating(s) 1-5'
+    option :country, type: :array, desc: 'Filter by country/countries'
     option :os, type: :array, enum: %w[ios android], desc: 'Filter by OS'
     QueryOptions.raw_filters(self)
     def list
@@ -300,13 +363,14 @@ module Luciq
     long_desc(<<~DESC, wrap: false)
       List surveys for an application.
 
-      Typed flags --type and --status both accept 0, 1, or 2. The raw --filters
-      object accepts the same keys: {"type": [0,1,2], "status": [0,1,2]}.
+      Typed flags --type (0=custom 1=nps 2=app_store) and --status (0=draft
+      1=published 2=paused). The raw --filters object accepts the same keys:
+      {"type": [0,1,2], "status": [0,1,2]}.
     DESC
     QueryOptions.app(self)
     QueryOptions.page(self)
-    option :type, type: :array, desc: 'Filter by type (0, 1, 2)'
-    option :status, type: :array, desc: 'Filter by status (0, 1, 2)'
+    option :type, type: :array, enum: %w[0 1 2], desc: 'Filter by type (0=custom 1=nps 2=app_store)'
+    option :status, type: :array, enum: %w[0 1 2], desc: 'Filter by status (0=draft 1=published 2=paused)'
     QueryOptions.raw_filters(self)
     def list
       Commands::Query.new(options).surveys_list
@@ -343,6 +407,165 @@ module Luciq
     option :platform, type: :string, enum: %w[ios android react_native flutter], desc: 'Filter by platform'
     def list
       Commands::Query.new(options).apps_list
+    end
+  end
+
+  class IssuesCLI < Thor
+    desc 'list', 'List issues across sources ranked by impact'
+    long_desc(<<~DESC, wrap: false)
+      List issues across crashes, APM, AI, and bugs, ranked by Apdex impact.
+
+      Typed flags: --limit, --sort-by (apdex_impact/occurrences_counter),
+      --sort-direction, --top-issues (curated shortlist). --pagination is a JSON
+      object of per-source cursor tokens. Other filters via --filters:
+        date_ms          {"gte": <ms>, "lte": <ms>}  (>= 24h span)
+        search_tokens    ["<text>", ...]
+        app_version      ["1.2.3", ...]
+        teams            ["<team-id>", ...]
+        platform         ["IOS","ANDROID","DART","JAVASCRIPT"]
+        apm_types        ["networks","traces","launches","screen_loadings","frame_drops"]
+        crashes_types    ["CRASH","ANR","OOM","NON_FATAL"]
+        ai_issues_types  ["visual_issue","broken_functionality"]
+        bugs_types       ["<type>", ...]
+        apdex_severity   ["high","medium","low","no_impact"]
+    DESC
+    QueryOptions.app(self)
+    option :limit, type: :numeric, desc: 'Maximum number of issues (1-50)'
+    option :sort_by, type: :string, enum: %w[apdex_impact occurrences_counter], desc: 'Sort field'
+    option :sort_direction, type: :string, enum: %w[asc desc], desc: 'Sort direction'
+    option :top_issues, type: :boolean, desc: 'Return a curated shortlist'
+    option :pagination, type: :string, desc: 'Per-source cursor tokens JSON object'
+    QueryOptions.raw_filters(self)
+    def list
+      Commands::Query.new(options).issues_list
+    end
+  end
+
+  class OpportunitiesCLI < Thor
+    desc 'list', 'List opportunities for an application'
+    long_desc(<<~DESC, wrap: false)
+      List opportunities ranked by priority then recency.
+
+      Typed flags --status, --priority, --team-id map into the same filter keys:
+        status    ["open","in_progress","closed","dismissed"]
+        priority  ["1","2","3","4","unset"]
+        team_id   "<team-ulid>" | "unassigned"
+    DESC
+    QueryOptions.app(self)
+    QueryOptions.page(self)
+    option :status, type: :array, enum: %w[open in_progress closed dismissed], desc: 'Filter by status'
+    option :priority, type: :array, enum: %w[1 2 3 4 unset], desc: 'Filter by priority'
+    option :team_id, type: :string, desc: 'Filter by team ULID or "unassigned"'
+    QueryOptions.raw_filters(self)
+    def list
+      Commands::Query.new(options).opportunities_list
+    end
+
+    desc 'show', 'Show details for a single opportunity'
+    QueryOptions.app(self)
+    option :id, type: :numeric, required: true, desc: 'Opportunity id'
+    def show
+      Commands::Query.new(options).opportunity_show(options[:id])
+    end
+  end
+
+  class AlertsCLI < Thor
+    desc 'list', 'List alert rules'
+    QueryOptions.app(self)
+    option :sort_by, type: :string,
+                     enum: %w[latest_creation_date last_edit_date highest_triggered_count],
+                     desc: 'Sort field'
+    option :sort_direction, type: :string, enum: %w[asc desc], desc: 'Sort direction'
+    def list
+      Commands::Query.new(options).alerts_list
+    end
+
+    desc 'show', 'Show a single alert rule'
+    QueryOptions.app(self)
+    option :ulid, type: :string, required: true, desc: 'Alert ULID (e.g. crashes_01HX...)'
+    def show
+      Commands::Query.new(options).alert_show(options[:ulid])
+    end
+
+    desc 'init', 'Show the menu (types, triggers, conditions, actions) for building rules'
+    QueryOptions.app(self)
+    def init
+      Commands::Query.new(options).alerts_init
+    end
+
+    desc 'create', 'Create an alert rule'
+    long_desc(<<~DESC, wrap: false)
+      Create an alert rule. Run `luciq alerts init` first for the valid types,
+      triggers, conditions, and actions, then pass the rule body as --payload JSON:
+        {"type":"Crashes","trigger":"<trigger>","title":"...","operation":0,
+         "conditions":[...],"actions":[...],"rule_owner":"<team-id>"}
+    DESC
+    QueryOptions.app(self)
+    option :payload, type: :string, required: true, desc: 'Rule body JSON object'
+    def create
+      Commands::Query.new(options).alert_create
+    end
+
+    desc 'update', 'Update an alert rule'
+    QueryOptions.app(self)
+    option :ulid, type: :string, required: true, desc: 'Alert ULID'
+    option :payload, type: :string, required: true, desc: 'Rule body JSON object'
+    def update
+      Commands::Query.new(options).alert_update(options[:ulid])
+    end
+
+    desc 'delete', 'Delete an alert rule'
+    QueryOptions.app(self)
+    option :ulid, type: :string, required: true, desc: 'Alert ULID'
+    def delete
+      Commands::Query.new(options).alert_delete(options[:ulid])
+    end
+  end
+
+  class IncidentsCLI < Thor
+    desc 'list', 'List triggered alerts (incidents)'
+    long_desc(<<~DESC, wrap: false)
+      List triggered alerts. Typed flags: --sort-by, --sort-direction, --status,
+      --type. Other filters via --filters:
+        date_ms  {"gte": <ms>, "lte": <ms>}
+        title    ["<token>", ...]
+      Status: open, manual_resolve, automatic_resolve.
+      Type: overall_app, launch, screen_loading, network, trace, frame_drop, crash,
+            anr, oom, non_fatal, fatal_ui_hang, feature_experiment.
+    DESC
+    QueryOptions.app(self)
+    QueryOptions.page(self)
+    option :sort_by, type: :string, enum: %w[first_triggered last_triggered count], desc: 'Sort field'
+    option :sort_direction, type: :string, enum: %w[asc desc], desc: 'Sort direction'
+    option :status, type: :array, enum: %w[open manual_resolve automatic_resolve], desc: 'Filter by status'
+    option :type, type: :array,
+                  enum: %w[overall_app launch screen_loading network trace frame_drop crash anr oom
+                           non_fatal fatal_ui_hang feature_experiment],
+                  desc: 'Filter by incident type(s)'
+    QueryOptions.raw_filters(self)
+    def list
+      Commands::Query.new(options).incidents_list
+    end
+
+    desc 'show', 'Show a single triggered alert'
+    QueryOptions.app(self)
+    option :ulid, type: :string, required: true, desc: 'Incident ULID'
+    def show
+      Commands::Query.new(options).incident_show(options[:ulid])
+    end
+
+    desc 'resolve', 'Resolve a triggered alert'
+    QueryOptions.app(self)
+    option :ulid, type: :string, required: true, desc: 'Incident ULID'
+    def resolve
+      Commands::Query.new(options).incident_resolve(options[:ulid])
+    end
+
+    desc 'reopen', 'Reopen a triggered alert'
+    QueryOptions.app(self)
+    option :ulid, type: :string, required: true, desc: 'Incident ULID'
+    def reopen
+      Commands::Query.new(options).incident_reopen(options[:ulid])
     end
   end
 end

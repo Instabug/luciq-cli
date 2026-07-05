@@ -47,7 +47,7 @@ module Luciq
     desc 'bugs SUBCOMMAND', 'Query bugs (list, show, update)'
     subcommand 'bugs', BugsCLI
 
-    desc 'apm SUBCOMMAND', 'Query APM data (groups, group, occurrence)'
+    desc 'apm SUBCOMMAND', 'Query APM data (groups, group, occurrence, funnels)'
     subcommand 'apm', ApmCLI
 
     desc 'reviews SUBCOMMAND', 'Query app reviews (list)'
@@ -58,6 +58,18 @@ module Luciq
 
     desc 'apps SUBCOMMAND', 'List accessible applications'
     subcommand 'apps', AppsCLI
+
+    desc 'issues SUBCOMMAND', 'Query issues ranked by impact (list)'
+    subcommand 'issues', IssuesCLI
+
+    desc 'opportunities SUBCOMMAND', 'Query opportunities (list, show)'
+    subcommand 'opportunities', OpportunitiesCLI
+
+    desc 'alerts SUBCOMMAND', 'Manage alert rules (list, show, init, create, update, delete)'
+    subcommand 'alerts', AlertsCLI
+
+    desc 'incidents SUBCOMMAND', 'Manage triggered alerts (list, show, resolve, reopen)'
+    subcommand 'incidents', IncidentsCLI
 
     desc 'insights', 'Show aggregated app-health insights for an application'
     long_desc(<<~DESC, wrap: false)
