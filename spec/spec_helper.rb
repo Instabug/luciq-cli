@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'webmock/rspec'
+require 'tmpdir'
 require 'luciq/cli'
 
 RSpec.configure do |config|
@@ -17,6 +18,18 @@ RSpec.configure do |config|
   config.disable_monkey_patching!
   config.warnings = true
   config.order = :random
+
+  # Keep tests isolated from the developer's real auth state (~/.luciqrc + env),
+  # so specs are deterministic regardless of a local `luciq login`.
+  config.before do
+    isolated_config = File.join(Dir.tmpdir, 'luciqrc-spec')
+    File.delete(isolated_config) if File.exist?(isolated_config)
+    stub_const('Luciq::Config::CONFIG_FILE', isolated_config)
+  end
+
+  config.after do
+    ENV.delete('LUCIQ_AUTH_TOKEN')
+  end
 
   WebMock.disable_net_connect!
 end
