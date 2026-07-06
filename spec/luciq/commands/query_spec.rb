@@ -551,6 +551,16 @@ RSpec.describe Luciq::Commands::Query do
     end
   end
 
+  describe 'non-JSON responses' do
+    it 'prints a raw CSV response verbatim instead of JSON-encoding it' do
+      csv = "rating,country\n5,US"
+      allow(client).to receive(:invoke_tool).and_return(csv)
+
+      expect { described_class.new({ slug: 'a', mode: 'production' }).reviews_list }
+        .to output("#{csv}\n").to_stdout
+    end
+  end
+
   describe 'client error handling' do
     it 'prints a friendly message and exits when the client raises' do
       allow(client).to receive(:invoke_tool).and_raise('boom')

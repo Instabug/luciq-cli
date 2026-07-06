@@ -203,9 +203,11 @@ module Luciq
         http.read_timeout = 300
 
         response = http.request(request)
-        return JSON.parse(response.body) if response.is_a?(Net::HTTPSuccess)
+        raise "Request failed (#{response.code}): #{response.body}" unless response.is_a?(Net::HTTPSuccess)
 
-        raise "Request failed (#{response.code}): #{response.body}"
+        JSON.parse(response.body)
+      rescue JSON::ParserError
+        response.body
       end
     end
   end

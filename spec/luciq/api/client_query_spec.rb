@@ -33,5 +33,13 @@ RSpec.describe Luciq::API::Client, 'query endpoints' do
       expect { client.invoke_tool('list_crashes', { slug: 'x', mode: 'production' }) }
         .to raise_error(RuntimeError, /422/)
     end
+
+    it 'returns the raw body when the response is not JSON (e.g. CSV)' do
+      csv = "rating,country\n5,US\n"
+      stub_request(:post, "#{base_url}/api/cli/tools/list_reviews")
+        .to_return(status: 200, body: csv)
+
+      expect(client.invoke_tool('list_reviews', { slug: 'a', mode: 'production' })).to eq(csv)
+    end
   end
 end

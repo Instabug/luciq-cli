@@ -221,7 +221,7 @@ module Luciq
       end
 
       def print_result(response)
-        puts JSON.pretty_generate(response)
+        puts(response.is_a?(String) ? response : JSON.pretty_generate(response))
       end
     end
   end
