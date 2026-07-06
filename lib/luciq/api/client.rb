@@ -26,6 +26,17 @@ module Luciq
         execute(uri, request)
       end
 
+      # Invokes a query tool by name with a hash of arguments (slug, mode,
+      # filters, pagination, ...) sent as a JSON body.
+      def invoke_tool(tool_name, arguments = {})
+        uri = build_uri("/api/cli/tools/#{tool_name}")
+        request = Net::HTTP::Post.new(uri)
+        request['Content-Type'] = 'application/json'
+        request.body = arguments.to_json
+        apply_headers(request)
+        execute(uri, request)
+      end
+
       def upload_ios_dsym(file_path:, app_token:)
         upload_dsym(file_path: file_path, app_token: app_token)
       end
@@ -192,9 +203,11 @@ module Luciq
         http.read_timeout = 300
 
         response = http.request(request)
-        return JSON.parse(response.body) if response.is_a?(Net::HTTPSuccess)
+        raise "Request failed (#{response.code}): #{response.body}" unless response.is_a?(Net::HTTPSuccess)
 
-        raise "Request failed (#{response.code}): #{response.body}"
+        JSON.parse(response.body)
+      rescue JSON::ParserError
+        response.body
       end
     end
   end

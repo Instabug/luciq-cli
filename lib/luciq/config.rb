@@ -11,7 +11,8 @@ module Luciq
       end
 
       def load_token
-        ENV['LUCIQ_AUTH_TOKEN'] || load_value('token')
+        token = ENV['LUCIQ_AUTH_TOKEN'] || load_value('token')
+        token unless token.to_s.strip.empty?
       end
 
       def save_token(token)
