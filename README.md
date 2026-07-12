@@ -32,7 +32,7 @@ bundle exec rake install
 
 ### 1. Authenticate
 
-Generate a CLI token from your [Luciq Dashboard](https://dashboard.luciq.ai/company/cli), then:
+Generate a CLI token from your [Luciq Dashboard](https://dashboard.luciq.ai/company/luciq-cli), then:
 
 > **Self-hosted clusters:** Replace `dashboard.luciq.ai` with your cluster URL.
 

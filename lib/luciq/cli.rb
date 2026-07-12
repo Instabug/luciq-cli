@@ -15,7 +15,7 @@ module Luciq
     desc 'login', 'Authenticate with Luciq'
     long_desc <<~DESC
       Authenticate with Luciq using a CLI token.
-      Generate a CLI token from your Luciq dashboard: https://dashboard.luciq.ai/company/cli
+      Generate a CLI token from your Luciq dashboard: https://dashboard.luciq.ai/company/luciq-cli
       The token will be saved in ~/.luciqrc
     DESC
     option :auth_token, type: :string, desc: 'CLI authentication token'
