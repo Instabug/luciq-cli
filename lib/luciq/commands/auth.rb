@@ -16,7 +16,7 @@ module Luciq
         unless token
           puts 'Login to Luciq'
           puts '=' * 40
-          puts 'Generate a CLI token from your Luciq dashboard: https://dashboard.luciq.ai/company/cli'
+          puts 'Generate a CLI token from your Luciq dashboard: https://dashboard.luciq.ai/company/luciq-cli'
           puts
           puts "Note: For self-hosted clusters, replace 'dashboard' with your cluster name."
           puts
