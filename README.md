@@ -12,13 +12,6 @@ and more.
 gem install luciq-cli
 ```
 
-### Using Homebrew (macOS/Linux)
-
-```bash
-brew tap instabug/tap
-brew install luciq-cli
-```
-
 ### From Source
 
 ```bash
