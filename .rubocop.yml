@@ -8,6 +8,10 @@ AllCops:
 Style/Documentation:
   Enabled: false
 
+Metrics/BlockLength:
+  Exclude:
+    - "Rakefile" # rake task blocks
+
 Metrics/MethodLength:
   Max: 25
 
