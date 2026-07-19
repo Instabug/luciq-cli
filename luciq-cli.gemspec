@@ -10,17 +10,17 @@ Gem::Specification.new do |spec|
 
   spec.summary       = 'Luciq CLI for developers'
   spec.description   = 'Interact with Luciq from the command line'
-  spec.homepage      = 'https://github.com/Instabug/luciq-cli'
+  spec.homepage      = 'https://github.com/luciqai/luciq-cli'
   spec.license       = 'MIT'
 
   spec.required_ruby_version = '>= 2.7.0'
 
   spec.metadata['homepage_uri'] = spec.homepage
-  spec.metadata['source_code_uri'] = 'https://github.com/Instabug/luciq-cli'
-  spec.metadata['changelog_uri'] = 'https://github.com/Instabug/luciq-cli/blob/main/CHANGELOG.md'
+  spec.metadata['source_code_uri'] = 'https://github.com/luciqai/luciq-cli'
+  spec.metadata['changelog_uri'] = 'https://github.com/luciqai/luciq-cli/blob/main/CHANGELOG.md'
   spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.files = Dir['lib/**/*', 'bin/*', 'README.md', 'CHANGELOG.md']
+  spec.files = Dir['lib/**/*', 'bin/*', 'README.md', 'CHANGELOG.md', 'LICENSE']
 
   spec.bindir        = 'bin'
   spec.executables   = ['luciq']

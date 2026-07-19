@@ -15,14 +15,13 @@ gem install luciq-cli
 ### Using Homebrew (macOS/Linux)
 
 ```bash
-brew tap instabug/tap
-brew install luciq-cli
+brew install luciqai/tap/luciq-cli
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/Instabug/luciq-cli.git
+git clone https://github.com/luciqai/luciq-cli.git
 cd luciq-cli
 bundle install
 bundle exec rake install
@@ -320,14 +319,25 @@ url=https://api.your-cluster.luciq.ai
 
 ## Development
 
-```bash
-git clone https://github.com/Instabug/luciq-cli.git
-cd luciq-cli
-bundle install
+Clone the repo and install dependencies as in [From Source](#from-source), then:
 
+```bash
 # Run tests
 bundle exec rspec
 
 # Test locally
 bundle exec bin/luciq --help
 ```
+
+## Releasing
+
+After publishing a new gem version to RubyGems, sync the Homebrew formula in
+the [homebrew-tap](https://github.com/luciqai/homebrew-tap) repo:
+
+```bash
+bundle exec rake formula:bump   # writes to ../homebrew-tap, override with TAP_DIR
+```
+
+Open a pull request in the tap repo with the result: Homebrew users stay on
+the previous version until the bumped formula lands on its `main` branch.
+`brew livecheck luciq-cli` reports when the formula lags RubyGems.
