@@ -199,6 +199,10 @@ module Luciq
       Update a bug. Provide at least one change: --status/--priority/--tags/--clear-tags
       change the bug; duplicate marking is a separate action and can't be combined with them.
 
+      Tags: --tags appends to the existing tags by default. Use --tag-action to change
+      that: replace sets --tags as the full list (removing others); remove deletes --tags
+      and keeps the rest. --clear-tags removes all tags.
+
       Mark a duplicate: --duplicate-of <master-number> (implies --action mark_as_duplicate).
       Detach a duplicate: --action unmark_as_duplicate.
     DESC
@@ -206,7 +210,9 @@ module Luciq
     option :number, type: :numeric, required: true, desc: 'Bug number'
     option :status, type: :string, enum: %w[new closed in_progress], desc: 'New status'
     option :priority, type: :string, enum: %w[na trivial minor major blocker], desc: 'New priority'
-    option :tags, type: :array, desc: 'Tags to set (replaces all existing tags)'
+    option :tags, type: :array, desc: 'Tags to apply (see --tag-action; appends to existing tags by default)'
+    option :tag_action, type: :string, enum: %w[replace append remove],
+                        desc: 'How --tags is applied: append (default, keep existing), replace, remove'
     option :clear_tags, type: :boolean, desc: 'Remove all tags'
     option :duplicate_of, type: :numeric, desc: 'Master bug number (marks this a duplicate)'
     option :action, type: :string, enum: %w[mark_as_duplicate unmark_as_duplicate],

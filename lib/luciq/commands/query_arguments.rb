@@ -106,6 +106,7 @@ module Luciq
           status_id: map_one(BUG_STATUS_IDS, @options[:status]),
           priority_id: map_one(BUG_PRIORITY_IDS, @options[:priority]),
           tags: (@options[:clear_tags] ? [] : @options[:tags]),
+          tag_action: (@options[:clear_tags] ? 'replace' : @options[:tag_action]),
           action: action,
           original_bug_number: @options[:duplicate_of]
         }.compact

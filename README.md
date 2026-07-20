@@ -182,16 +182,20 @@ luciq crashes show --slug my-app --mode production --number 42
 |------------|-------------|
 | `list` | List bugs. Flags: `--status` (new/closed/in_progress), `--priority` (na/trivial/minor/major/blocker), `--app-version` |
 | `show --number N` | Details for one bug |
-| `update --number N` | Update a bug. Flags: `--status`, `--priority`, `--tags`, `--clear-tags`, `--duplicate-of`, `--action` |
+| `update --number N` | Update a bug. Flags: `--status`, `--priority`, `--tags`, `--tag-action`, `--clear-tags`, `--duplicate-of`, `--action` |
 
 ```bash
 luciq bugs update --slug my-app --mode production --number 7 --status closed --priority major
 luciq bugs update --slug my-app --mode production --number 7 --duplicate-of 3
+luciq bugs update --slug my-app --mode production --number 7 --tags urgent regression
+luciq bugs update --slug my-app --mode production --number 7 --tags stale --tag-action remove
+luciq bugs update --slug my-app --mode production --number 7 --tags only-this --tag-action replace
 ```
 
 Provide at least one change. Duplicate marking (`--duplicate-of` / `--action`)
-can't be combined with `--status`/`--priority`; use `--clear-tags` to remove all
-tags.
+can't be combined with `--status`/`--priority`. Tags: `--tags` appends to the existing
+tags by default; `--tag-action replace` sets `--tags` as the full list (removing others),
+`--tag-action remove` deletes `--tags` and keeps the rest; `--clear-tags` removes all.
 
 ### APM
 
