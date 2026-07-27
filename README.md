@@ -51,14 +51,16 @@ Upload Android mapping files (`mapping.txt`):
 
 ```bash
 luciq upload android-mapping mapping.txt \
-  --app-token YOUR_APP_TOKEN \
+  --slug my-app \
+  --mode production \
   --version-name 1.0.0 \
   --version-code 1
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--app-token` | Luciq application token (required) |
+| `--slug` | Application slug (required) |
+| `--mode` | Application mode, e.g., `production` (required) |
 | `--version-name` | App version name, e.g., `1.0.0` (required) |
 | `--version-code` | App version code, e.g., `1` (required) |
 
@@ -124,11 +126,13 @@ Run `luciq upload help SUBCOMMAND` for the full options of any command.
 | `luciq upload flutter-android-sourcemap FILE` | `.zip` | Android Dart symbol files |
 | `luciq upload flutter-ndk FILE` | `.zip` | NDK `.so` shared object files (`--arch`) |
 
-Common options: `--app-token` is required for every command. dSYM commands
-(`*-ios-dsym`) need only `--app-token`. Mapping, source-map, and Flutter Dart-symbol
-commands also require `--version-name` / `--version-code` (React Native source-map
-commands additionally accept `--codepush`). NDK commands require `--version-name` and
-`--arch` (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`) — not `--version-code`.
+Common options: `--slug` and `--mode` are required for every command — uploads use
+your CLI login, the same as query commands. dSYM commands (`*-ios-dsym`) need only
+`--slug` / `--mode`. Mapping, source-map, and
+Flutter Dart-symbol commands also require `--version-name` / `--version-code`
+(React Native source-map commands additionally accept `--codepush`). NDK commands
+require `--version-name` and `--arch` (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`)
+— not `--version-code`.
 
 ## Query & management commands
 

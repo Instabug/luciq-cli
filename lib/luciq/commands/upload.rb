@@ -13,144 +13,68 @@ module Luciq
       end
 
       def ios_dsym(file_path)
-        run_upload(file_path, 'iOS dSYM file', format: :zip) do
-          @client.upload_ios_dsym(file_path: file_path, app_token: @options[:app_token])
-        end
+        run_upload('ios-dsym', file_path, 'iOS dSYM file', format: :zip)
       end
 
       def android_mapping(file_path)
-        run_upload(file_path, 'Android mapping file') do
-          @client.upload_android_mapping(
-            file_path: file_path,
-            app_token: @options[:app_token],
-            version_code: @options[:version_code],
-            version_name: @options[:version_name]
-          )
-        end
+        run_upload('android-mapping', file_path, 'Android mapping file')
       end
 
       def android_ndk(file_path)
-        run_upload(file_path, 'Android NDK .so files', format: :zip) do
-          validate_arch!
-          @client.upload_android_ndk(
-            file_path: file_path,
-            app_token: @options[:app_token],
-            app_version: @options[:version_name],
-            arch: @options[:arch]
-          )
-        end
+        run_upload('android-ndk', file_path, 'Android NDK .so files', format: :zip, arch: true)
       end
 
       def react_native_ios_dsym(file_path)
-        run_upload(file_path, 'React Native iOS dSYM', format: :zip) do
-          @client.upload_react_native_ios_dsym(file_path: file_path, app_token: @options[:app_token])
-        end
+        run_upload('react-native-ios-dsym', file_path, 'React Native iOS dSYM', format: :zip)
       end
 
       def react_native_ios_sourcemap(file_path)
-        run_upload(file_path, 'React Native iOS source map', format: :sourcemap) do
-          @client.upload_react_native_ios_sourcemap(
-            file_path: file_path,
-            app_token: @options[:app_token],
-            app_version: build_app_version
-          )
-        end
+        run_upload('react-native-ios-sourcemap', file_path, 'React Native iOS source map', format: :sourcemap)
       end
 
       def react_native_android_mapping(file_path)
-        run_upload(file_path, 'React Native Android mapping file') do
-          @client.upload_react_native_android_mapping(
-            file_path: file_path,
-            app_token: @options[:app_token],
-            version_code: @options[:version_code],
-            version_name: @options[:version_name]
-          )
-        end
+        run_upload('react-native-android-mapping', file_path, 'React Native Android mapping file')
       end
 
       def react_native_android_sourcemap(file_path)
-        run_upload(file_path, 'React Native Android source map', format: :sourcemap) do
-          @client.upload_react_native_android_sourcemap(
-            file_path: file_path,
-            app_token: @options[:app_token],
-            app_version: build_app_version
-          )
-        end
+        run_upload('react-native-android-sourcemap', file_path, 'React Native Android source map', format: :sourcemap)
       end
 
       def react_native_ndk(file_path)
-        run_upload(file_path, 'React Native NDK .so files', format: :zip) do
-          validate_arch!
-          @client.upload_react_native_ndk(
-            file_path: file_path,
-            app_token: @options[:app_token],
-            app_version: @options[:version_name],
-            arch: @options[:arch]
-          )
-        end
+        run_upload('react-native-ndk', file_path, 'React Native NDK .so files', format: :zip, arch: true)
       end
 
       def flutter_ios_dsym(file_path)
-        run_upload(file_path, 'Flutter iOS dSYM', format: :zip) do
-          @client.upload_flutter_ios_dsym(file_path: file_path, app_token: @options[:app_token])
-        end
+        run_upload('flutter-ios-dsym', file_path, 'Flutter iOS dSYM', format: :zip)
       end
 
       def flutter_ios_sourcemap(file_path)
-        run_upload(file_path, 'Flutter iOS Dart sourcemap', format: :zip) do
-          @client.upload_flutter_ios_sourcemap(
-            file_path: file_path,
-            app_token: @options[:app_token],
-            version_name: @options[:version_name],
-            version_code: @options[:version_code]
-          )
-        end
+        run_upload('flutter-ios-sourcemap', file_path, 'Flutter iOS Dart sourcemap', format: :zip)
       end
 
       def flutter_android_mapping(file_path)
-        run_upload(file_path, 'Flutter Android mapping file') do
-          @client.upload_flutter_android_mapping(
-            file_path: file_path,
-            app_token: @options[:app_token],
-            version_code: @options[:version_code],
-            version_name: @options[:version_name]
-          )
-        end
+        run_upload('flutter-android-mapping', file_path, 'Flutter Android mapping file')
       end
 
       def flutter_android_sourcemap(file_path)
-        run_upload(file_path, 'Flutter Android Dart sourcemap', format: :zip) do
-          @client.upload_flutter_android_sourcemap(
-            file_path: file_path,
-            app_token: @options[:app_token],
-            version_name: @options[:version_name],
-            version_code: @options[:version_code]
-          )
-        end
+        run_upload('flutter-android-sourcemap', file_path, 'Flutter Android Dart sourcemap', format: :zip)
       end
 
       def flutter_ndk(file_path)
-        run_upload(file_path, 'Flutter NDK .so files', format: :zip) do
-          validate_arch!
-          @client.upload_flutter_ndk(
-            file_path: file_path,
-            app_token: @options[:app_token],
-            app_version: @options[:version_name],
-            arch: @options[:arch]
-          )
-        end
+        run_upload('flutter-ndk', file_path, 'Flutter NDK .so files', format: :zip, arch: true)
       end
 
       private
 
-      def run_upload(file_path, label, format: nil)
+      def run_upload(command, file_path, label, format: nil, arch: false)
         validate_file!(file_path)
         validate_format!(file_path, format)
+        validate_arch! if arch
 
         puts "Uploading #{label}: #{File.basename(file_path)}"
         puts
 
-        yield
+        @client.upload(command, file_path, @options)
 
         puts "✓ #{label} uploaded successfully!"
       rescue StandardError => e
@@ -197,14 +121,6 @@ module Luciq
         puts "✗ Invalid architecture: #{@options[:arch]}"
         puts "  Allowed values: #{ALLOWED_ARCHITECTURES.join(', ')}"
         exit 1
-      end
-
-      def build_app_version
-        {
-          code: @options[:version_code],
-          name: @options[:version_name],
-          codepush: @options[:codepush]
-        }.compact
       end
     end
   end

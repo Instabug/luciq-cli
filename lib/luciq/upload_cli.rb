@@ -2,6 +2,7 @@
 
 require 'thor'
 require 'luciq/commands/upload'
+require 'luciq/query_cli'
 
 module Luciq
   class UploadCLI < Thor
@@ -12,9 +13,9 @@ module Luciq
       Upload iOS dSYM files to Luciq for crash symbolication.
       File format: .zip containing dSYM files
       Example:
-        luciq upload ios-dsym MyApp.dSYM.zip --app-token APP_TOKEN
+        luciq upload ios-dsym MyApp.dSYM.zip --slug my-app --mode production
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
+    QueryOptions.app(self)
     def ios_dsym(file)
       Commands::Upload.new(options).ios_dsym(file)
     end
@@ -24,9 +25,9 @@ module Luciq
       Upload Android Proguard/R8 mapping files to Luciq for crash deobfuscation.
       File format: mapping.txt
       Example:
-        luciq upload android-mapping mapping.txt --app-token APP_TOKEN --version-name 1.0.0 --version-code 1
+        luciq upload android-mapping mapping.txt --slug my-app --mode production --version-name 1.0.0 --version-code 1
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
+    QueryOptions.app(self)
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     option :version_code, type: :string, required: true, desc: 'App version code (e.g., 1)'
     def android_mapping(file)
@@ -38,9 +39,9 @@ module Luciq
       Upload Android NDK shared object (.so) files to Luciq for native crash symbolication.
       File format: .zip containing the .so files
       Example:
-        luciq upload android-ndk so-files.zip --app-token APP_TOKEN --version-name 1.0.0 --arch arm64-v8a
+        luciq upload android-ndk so-files.zip --slug my-app --mode production --version-name 1.0.0 --arch arm64-v8a
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
+    QueryOptions.app(self)
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     option :arch, type: :string, required: true, enum: ARCHITECTURES, desc: 'CPU architecture'
     def android_ndk(file)
@@ -52,9 +53,9 @@ module Luciq
       Upload React Native iOS dSYM files to Luciq for native crash symbolication.
       File format: .zip containing dSYM files
       Example:
-        luciq upload react-native-ios-dsym dsyms.zip --app-token APP_TOKEN
+        luciq upload react-native-ios-dsym dsyms.zip --slug my-app --mode production
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your application token'
+    QueryOptions.app(self)
     def react_native_ios_dsym(file)
       Commands::Upload.new(options).react_native_ios_dsym(file)
     end
@@ -64,9 +65,9 @@ module Luciq
       Upload React Native iOS JavaScript source maps to Luciq for crash symbolication.
       File format: .json or .txt source map
       Example:
-        luciq upload react-native-ios-sourcemap ios-sourcemap.json --app-token APP_TOKEN --version-code 1 --version-name 1.0.0
+        luciq upload react-native-ios-sourcemap ios-sourcemap.json --slug my-app --mode production --version-code 1 --version-name 1.0.0
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your application token'
+    QueryOptions.app(self)
     option :version_code, type: :string, required: true, desc: 'App version code (e.g., 1)'
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     option :codepush, type: :string, desc: 'CodePush version label (e.g., v42)'
@@ -79,9 +80,9 @@ module Luciq
       Upload React Native Android Proguard/R8 mapping files to Luciq for native crash deobfuscation.
       File format: mapping.txt
       Example:
-        luciq upload react-native-android-mapping mapping.txt --app-token APP_TOKEN --version-code 1 --version-name 1.0.0
+        luciq upload react-native-android-mapping mapping.txt --slug my-app --mode production --version-code 1 --version-name 1.0.0
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your application token'
+    QueryOptions.app(self)
     option :version_code, type: :string, required: true, desc: 'App version code (e.g., 1)'
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     def react_native_android_mapping(file)
@@ -93,9 +94,9 @@ module Luciq
       Upload React Native Android JavaScript source maps to Luciq for crash deobfuscation.
       File format: .json or .txt source map
       Example:
-        luciq upload react-native-android-sourcemap android-sourcemap.json --app-token APP_TOKEN --version-code 1 --version-name 1.0.0
+        luciq upload react-native-android-sourcemap android-sourcemap.json --slug my-app --mode production --version-code 1 --version-name 1.0.0
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your application token'
+    QueryOptions.app(self)
     option :version_code, type: :string, required: true, desc: 'App version code (e.g., 1)'
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     option :codepush, type: :string, desc: 'CodePush version label (e.g., v42)'
@@ -108,9 +109,9 @@ module Luciq
       Upload React Native NDK shared object (.so) files to Luciq for native crash symbolication.
       File format: .zip containing the .so files
       Example:
-        luciq upload react-native-ndk so-files.zip --app-token APP_TOKEN --version-name 1.0.0 --arch arm64-v8a
+        luciq upload react-native-ndk so-files.zip --slug my-app --mode production --version-name 1.0.0 --arch arm64-v8a
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your application token'
+    QueryOptions.app(self)
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     option :arch, type: :string, required: true, enum: ARCHITECTURES, desc: 'CPU architecture'
     def react_native_ndk(file)
@@ -122,9 +123,9 @@ module Luciq
       Upload Flutter iOS dSYM files to Luciq for native crash symbolication.
       File format: .zip containing dSYM files
       Example:
-        luciq upload flutter-ios-dsym MyApp.dSYM.zip --app-token APP_TOKEN
+        luciq upload flutter-ios-dsym MyApp.dSYM.zip --slug my-app --mode production
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
+    QueryOptions.app(self)
     def flutter_ios_dsym(file)
       Commands::Upload.new(options).flutter_ios_dsym(file)
     end
@@ -134,9 +135,9 @@ module Luciq
       Upload Flutter iOS Dart sourcemap files to Luciq for crash symbolication.
       File format: .zip containing Flutter debug symbols
       Example:
-        luciq upload flutter-ios-sourcemap app.ios-arm64.symbols.zip --app-token APP_TOKEN --version-name 1.0.0 --version-code 1
+        luciq upload flutter-ios-sourcemap app.ios-arm64.symbols.zip --slug my-app --mode production --version-name 1.0.0 --version-code 1
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
+    QueryOptions.app(self)
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     option :version_code, type: :string, required: true, desc: 'App version code (e.g., 1)'
     def flutter_ios_sourcemap(file)
@@ -148,9 +149,9 @@ module Luciq
       Upload Flutter Android Proguard/R8 mapping files to Luciq for native crash deobfuscation.
       File format: mapping.txt
       Example:
-        luciq upload flutter-android-mapping mapping.txt --app-token APP_TOKEN --version-code 1 --version-name 1.0.0
+        luciq upload flutter-android-mapping mapping.txt --slug my-app --mode production --version-code 1 --version-name 1.0.0
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
+    QueryOptions.app(self)
     option :version_code, type: :string, required: true, desc: 'App version code (e.g., 1)'
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     def flutter_android_mapping(file)
@@ -162,9 +163,9 @@ module Luciq
       Upload Flutter Android Dart sourcemap files to Luciq for crash symbolication.
       File format: .zip containing Flutter debug symbols
       Example:
-        luciq upload flutter-android-sourcemap app.android-arm64.symbols.zip --app-token APP_TOKEN --version-name 1.0.0 --version-code 1
+        luciq upload flutter-android-sourcemap app.android-arm64.symbols.zip --slug my-app --mode production --version-name 1.0.0 --version-code 1
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
+    QueryOptions.app(self)
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     option :version_code, type: :string, required: true, desc: 'App version code (e.g., 1)'
     def flutter_android_sourcemap(file)
@@ -176,9 +177,9 @@ module Luciq
       Upload Flutter NDK shared object (.so) files to Luciq for native crash symbolication.
       File format: .zip containing the .so files
       Example:
-        luciq upload flutter-ndk so-files.zip --app-token APP_TOKEN --version-name 1.0.0 --arch arm64-v8a
+        luciq upload flutter-ndk so-files.zip --slug my-app --mode production --version-name 1.0.0 --arch arm64-v8a
     DESC
-    option :app_token, type: :string, required: true, desc: 'Your Luciq application token'
+    QueryOptions.app(self)
     option :version_name, type: :string, required: true, desc: 'App version name (e.g., 1.0.0)'
     option :arch, type: :string, required: true, enum: ARCHITECTURES, desc: 'CPU architecture'
     def flutter_ndk(file)
