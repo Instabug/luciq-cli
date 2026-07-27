@@ -45,14 +45,14 @@ RSpec.describe Luciq::Commands::Auth do
 
     context 'when token is provided' do
       it 'displays user information' do
-        stub_request(:get, "#{base_url}/api/web/public/cli/whoami")
+        stub_request(:get, "#{base_url}/api/cli/whoami")
           .to_return(status: 200, body: { email: 'dev@example.com', name: 'Developer' }.to_json)
 
         expect { auth.whoami }.to output(include('dev@example.com', 'Developer')).to_stdout
       end
 
       it 'shows error for invalid token' do
-        stub_request(:get, "#{base_url}/api/web/public/cli/whoami")
+        stub_request(:get, "#{base_url}/api/cli/whoami")
           .to_return(status: 401, body: { message: 'Authentication failed' }.to_json)
 
         expect { auth.whoami }.to output(include('Authentication failed')).to_stdout.and raise_error(SystemExit)

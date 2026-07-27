@@ -20,7 +20,7 @@ module Luciq
       end
 
       def whoami
-        uri = build_uri('/api/web/public/cli/whoami')
+        uri = build_uri('/api/cli/whoami')
         request = Net::HTTP::Get.new(uri)
         apply_headers(request)
         execute(uri, request)
