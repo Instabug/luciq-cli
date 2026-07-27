@@ -213,7 +213,7 @@ module Luciq
     option :tags, type: :array, desc: 'Tags to apply (see --tag-action; appends to existing tags by default)'
     option :tag_action, type: :string, enum: %w[replace append remove],
                         desc: 'How --tags is applied: append (default, keep existing), replace, remove'
-    option :clear_tags, type: :boolean, desc: 'Remove all tags'
+    option :clear_tags, type: :boolean, desc: 'Remove all tags (cannot be combined with --tag-action)'
     option :duplicate_of, type: :numeric, desc: 'Master bug number (marks this a duplicate)'
     option :action, type: :string, enum: %w[mark_as_duplicate unmark_as_duplicate],
                     desc: 'Duplicate action (defaults to mark_as_duplicate with --duplicate-of)'

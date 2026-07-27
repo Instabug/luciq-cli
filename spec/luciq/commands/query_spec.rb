@@ -125,14 +125,18 @@ RSpec.describe Luciq::Commands::Query do
       expect { described_class.new(options).bug_update(7) }.to output.to_stdout
     end
 
-    it 'forces replace over any tag_action when --clear-tags is set' do
+    it 'rejects combining --clear-tags with --tag-action' do
       options = { slug: 'a', mode: 'production', clear_tags: true, tag_action: 'append' }
 
-      expect(client).to receive(:invoke_tool)
-        .with('update_bug', { slug: 'a', mode: 'production', number: 7, tags: [], tag_action: 'replace' })
-        .and_return({})
+      expect(client).not_to receive(:invoke_tool)
+      expect { described_class.new(options).bug_update(7) }
+        .to output(/clear-tags cannot be combined with --tag-action/).to_stdout.and raise_error(SystemExit)
+    end
 
-      expect { described_class.new(options).bug_update(7) }.to output.to_stdout
+    it 'refuses --tag-action passed without any change' do
+      expect(client).not_to receive(:invoke_tool)
+      expect { described_class.new({ slug: 'a', mode: 'production', tag_action: 'remove' }).bug_update(7) }
+        .to output(/at least one change/).to_stdout.and raise_error(SystemExit)
     end
   end
 
