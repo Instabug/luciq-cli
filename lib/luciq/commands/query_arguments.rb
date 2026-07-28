@@ -101,6 +101,9 @@ module Luciq
         if action && (@options[:status] || @options[:priority])
           raise 'Duplicate marking cannot be combined with --status/--priority'
         end
+        if @options[:clear_tags] && @options[:tag_action]
+          raise '--clear-tags cannot be combined with --tag-action (--clear-tags already replaces with an empty set)'
+        end
 
         changes = {
           status_id: map_one(BUG_STATUS_IDS, @options[:status]),
@@ -109,9 +112,19 @@ module Luciq
           action: action,
           original_bug_number: @options[:duplicate_of]
         }.compact
-        return changes unless changes.empty?
 
-        raise 'Provide at least one change (--status/--priority/--tags/--clear-tags/--duplicate-of/--action)'
+        if changes.empty?
+          raise 'Provide at least one change (--status/--priority/--tags/--clear-tags/--duplicate-of/--action)'
+        end
+
+        # tag_action only modifies how --tags is applied; on its own it is not a change
+        if @options[:clear_tags]
+          changes[:tag_action] = 'replace'
+        elsif @options[:tag_action]
+          changes[:tag_action] = @options[:tag_action]
+        end
+
+        changes
       end
 
       def bug_duplicate_action
