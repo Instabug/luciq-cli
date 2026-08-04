@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-04
+
+### Changed
+
+- **Breaking:** `luciq upload` commands now take `--slug` and `--mode` instead of `--app-token`, matching the query commands. Uploads authenticate with your CLI login, so no application token is needed.
+- `luciq whoami` and `luciq upload` now call the Luciq API gateway instead of the public backend endpoints.
+
+### Added
+
+- `--tag-action` on `luciq bugs update` to control how `--tags` is applied: `append` (default), `replace`, or `remove`
+- Homebrew installation: `brew install luciqai/tap/luciq-cli`
+- MIT LICENSE
+
+### Fixed
+
+- `luciq bugs update` now rejects `--clear-tags` combined with `--tag-action`, and no longer treats a tags-only change as an empty update
+- Corrected the dashboard URL shown for creating a CLI token
+
 ## [0.2.0] - 2026-07-05
 
 ### Added
